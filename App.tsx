@@ -11,7 +11,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('generator');
 
   return (
-    <div className="relative min-h-screen bg-gray-900 text-gray-300 font-sans flex">
+    <div className="relative min-h-screen bg-slate-900 text-slate-300 font-sans flex">
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}

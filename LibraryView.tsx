@@ -8,6 +8,13 @@ import { MicrophoneIcon, SearchIcon, ArrowLeftIcon, CopyIcon, DownloadIcon, Volu
 import { renderSimpleMarkdown } from './utils/markdown';
 import { exportAsPdf, exportAsDocx } from './utils/export';
 
+const LoadingSpinner: React.FC<{className?: string}> = ({ className="" }) => (
+    <svg className={`animate-spin h-5 w-5 text-white ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+);
+
 // --- Reusable Quiz Component ---
 const QuizDisplay: React.FC<{ quizData: QuizQuestion[], onTryAgain: () => void }> = ({ quizData, onTryAgain }) => {
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
@@ -41,42 +48,42 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[], onTryAgain: () => void }
             {!isQuizSubmitted ? (
                 <>
                     {quizData.map((q, qIndex) => (
-                        <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                        <div key={qIndex} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                             <p className="font-semibold mb-3">{qIndex + 1}. {q.question}</p>
                             <div className="space-y-2">
                                 {q.options.map((option, oIndex) => (
-                                    <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-gray-700 cursor-pointer">
-                                        <input type="radio" name={`question-${qIndex}`} value={option} onChange={() => handleAnswerChange(qIndex, option)} checked={userAnswers[qIndex] === option} className="mr-3 h-4 w-4 bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600" />
+                                    <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-slate-700 cursor-pointer">
+                                        <input type="radio" name={`question-${qIndex}`} value={option} onChange={() => handleAnswerChange(qIndex, option)} checked={userAnswers[qIndex] === option} className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-teal-500 focus:ring-teal-600" />
                                         <span>{option}</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
                     ))}
-                    <button onClick={handleSubmitQuiz} className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Submit Quiz</button>
+                    <button onClick={handleSubmitQuiz} className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-teal-700 transition-colors">Submit Quiz</button>
                 </>
             ) : (
                 <>
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-bold text-white">Quiz Results</h2>
-                        <p className="text-lg text-blue-400">You scored {quizScore} out of {quizData.length}</p>
+                        <p className="text-lg text-teal-400">You scored {quizScore} out of {quizData.length}</p>
                     </div>
                     {quizData.map((q, qIndex) => {
                         const userAnswer = userAnswers[qIndex];
                         const isCorrect = userAnswer === q.answer;
                         return (
-                            <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 mb-4">
+                            <div key={qIndex} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 mb-4">
                                 <p className="font-semibold mb-2">{qIndex + 1}. {q.question}</p>
                                 <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}</p>
-                                {!isCorrect && <p className="text-sm text-gray-300">Correct answer: {q.answer}</p>}
-                                <div className="mt-3 pt-3 border-t border-gray-700">
+                                {!isCorrect && <p className="text-sm text-slate-300">Correct answer: {q.answer}</p>}
+                                <div className="mt-3 pt-3 border-t border-slate-700">
                                     <p className="text-sm font-semibold text-sky-400">Explanation:</p>
-                                    <p className="text-sm text-gray-400">{q.explanation}</p>
+                                    <p className="text-sm text-slate-400">{q.explanation}</p>
                                 </div>
                             </div>
                         );
                     })}
-                    <button onClick={handleTryAgain} className="w-full bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-500 transition-colors">Try Again</button>
+                    <button onClick={handleTryAgain} className="w-full bg-slate-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-slate-500 transition-colors">Try Again</button>
                 </>
             )}
         </div>
@@ -87,7 +94,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[], onTryAgain: () => void }
 // --- Helper Components ---
 
 const BookCard: React.FC<{ book: Book; onSelect: () => void }> = ({ book, onSelect }) => (
-  <button onClick={onSelect} className="text-left group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg">
+  <button onClick={onSelect} className="text-left group focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-lg">
     <div className="relative">
       <img src={book.coverImage} alt={book.title} className="w-full h-auto object-cover rounded-lg shadow-lg aspect-[2/3] transition-transform duration-300 group-hover:scale-105" />
       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-lg">
@@ -95,7 +102,7 @@ const BookCard: React.FC<{ book: Book; onSelect: () => void }> = ({ book, onSele
       </div>
     </div>
     <h3 className="mt-2 font-bold text-white truncate">{book.title}</h3>
-    <p className="text-sm text-gray-400 truncate">{book.author}</p>
+    <p className="text-sm text-slate-400 truncate">{book.author}</p>
   </button>
 );
 
@@ -143,7 +150,7 @@ const SummaryResults: React.FC<{
   const handleTtsToggle = () => isSpeaking ? cancel() : speak();
 
   return (
-    <div className="mt-4 bg-gray-900/70 rounded-lg p-6 border border-gray-800">
+    <div className="mt-4 bg-slate-800 rounded-lg p-6 border border-slate-700">
       <div ref={contentRef} className="prose prose-invert max-w-none">
         {summaryType === 'concept-map' ? (
           <>
@@ -154,22 +161,23 @@ const SummaryResults: React.FC<{
           <div dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(summaryContent.text || '') }} />
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 mt-4">
-        <button onClick={onGenerateQuiz} disabled={isGeneratingQuiz} className="bg-sky-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-sky-700 transition-colors disabled:bg-sky-800/50">
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <button onClick={onGenerateQuiz} disabled={isGeneratingQuiz} className="bg-sky-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-sky-700 transition-colors disabled:bg-sky-800/50 flex items-center justify-center gap-2">
+            {isGeneratingQuiz && <LoadingSpinner />}
             {isGeneratingQuiz ? 'Generating Quiz...' : 'Quiz Yourself on This Summary'}
         </button>
         <div className="flex items-center gap-2">
-            <button onClick={handleCopy} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label="Copy to clipboard">
+            <button onClick={handleCopy} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Copy to clipboard">
                 <span className="text-sm mr-2">{isCopied ? 'Copied!' : ''}</span><CopyIcon />
             </button>
-            <button onClick={handlePdfExport} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label="Download as PDF">
+            <button onClick={handlePdfExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Download as PDF">
                 <DownloadIcon /><span className="ml-1 text-xs">PDF</span>
             </button>
-            <button onClick={handleDocxExport} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label="Download as DOCX">
+            <button onClick={handleDocxExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Download as DOCX">
                 <DownloadIcon /><span className="ml-1 text-xs">DOCX</span>
             </button>
             {isAvailable && (
-                <button onClick={handleTtsToggle} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label={isSpeaking ? "Stop speech" : "Read aloud"}>
+                <button onClick={handleTtsToggle} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label={isSpeaking ? "Stop speech" : "Read aloud"}>
                   {isSpeaking ? <SquareIcon /> : <Volume2Icon />}
                 </button>
             )}
@@ -235,15 +243,17 @@ export const LibraryView: React.FC = () => {
       };
       fetchRecommendations();
     }
-  }, [selectedBook, activeTab, recommendations]);
+  }, [selectedBook, activeTab]);
 
   // Reset states when a new book is selected
   useEffect(() => {
     setCurrentChapterIndex(0);
+    setActiveTab('read');
     setChapterQuiz(null);
     setSummaryQuiz(null);
     setSummaryContent(null);
     setSummaryChapter('full');
+    setRecommendations([]);
   }, [selectedBook]);
 
   const handleGenerateSummary = async () => {
@@ -301,42 +311,43 @@ export const LibraryView: React.FC = () => {
   if (selectedBook) {
     const currentChapter = selectedBook.chapters[currentChapterIndex];
     return (
-        <div className="flex-1 flex flex-col p-6 bg-black/20 overflow-y-auto">
-            <button onClick={() => { setSelectedBook(null); setRecommendations([]); }} className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 mb-4 self-start">
+        <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-y-auto">
+            <button onClick={() => setSelectedBook(null)} className="flex items-center gap-2 text-sm text-teal-400 hover:text-teal-300 mb-4 self-start">
                 <ArrowLeftIcon /> Back to Library
             </button>
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 <div className="w-full lg:w-1/4 flex-shrink-0">
                     <img src={selectedBook.coverImage} alt={selectedBook.title} className="w-full h-auto object-cover rounded-lg shadow-lg aspect-[2/3]" />
                     <h2 className="mt-4 text-2xl font-bold text-white">{selectedBook.title}</h2>
-                    <p className="text-lg text-gray-400">{selectedBook.author}</p>
+                    <p className="text-lg text-slate-400">{selectedBook.author}</p>
                 </div>
                 <div className="flex-1 w-full">
-                    <div className="flex border-b border-gray-700">
+                    <div className="flex border-b border-slate-700">
                         {(['read', 'summarize', 'details'] as const).map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-medium transition-colors capitalize ${activeTab === tab ? 'border-b-2 border-blue-500 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>{tab}</button>
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-medium transition-colors capitalize ${activeTab === tab ? 'border-b-2 border-teal-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>{tab}</button>
                         ))}
                     </div>
                     <div className="py-6">
                         {activeTab === 'read' && (
                             <div className="space-y-4">
                                <div className="flex justify-between items-center flex-wrap gap-4">
-                                    <select value={currentChapterIndex} onChange={e => { setCurrentChapterIndex(parseInt(e.target.value)); setChapterQuiz(null); }} className="bg-gray-800 text-lg font-semibold text-sky-400 border border-gray-700 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <select value={currentChapterIndex} onChange={e => { setCurrentChapterIndex(parseInt(e.target.value)); setChapterQuiz(null); }} className="bg-slate-800 text-lg font-semibold text-sky-400 border border-slate-700 rounded-md px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:outline-none">
                                       {selectedBook.chapters.map((chap, i) => <option key={i} value={i}>{chap.title}</option>)}
                                     </select>
                                     <div className="flex items-center gap-2">
-                                        <select value={theme} onChange={e => setTheme(e.target.value)} className="bg-gray-800 text-xs border border-gray-700 rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"><option value="dark">Dark</option><option value="light">Light</option></select>
-                                        <div className="flex items-center bg-gray-800 rounded-md border border-gray-700">
-                                            <button onClick={() => setFontSize('text-sm')} className={`px-2 py-1 text-xs ${fontSize === 'text-sm' ? 'bg-blue-600' : ''} rounded-l-md`}>A</button>
-                                            <button onClick={() => setFontSize('text-base')} className={`px-2 py-1 text-sm ${fontSize === 'text-base' ? 'bg-blue-600' : ''}`}>A</button>
-                                            <button onClick={() => setFontSize('text-lg')} className={`px-2 py-1 text-base ${fontSize === 'text-lg' ? 'bg-blue-600' : ''} rounded-r-md`}>A</button>
+                                        <select value={theme} onChange={e => setTheme(e.target.value)} className="bg-slate-800 text-xs border border-slate-700 rounded-md px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:outline-none"><option value="dark">Dark</option><option value="light">Light</option></select>
+                                        <div className="flex items-center bg-slate-800 rounded-md border border-slate-700">
+                                            <button onClick={() => setFontSize('text-sm')} className={`px-2 py-1 text-xs ${fontSize === 'text-sm' ? 'bg-teal-600' : ''} rounded-l-md`}>A</button>
+                                            <button onClick={() => setFontSize('text-base')} className={`px-2 py-1 text-sm ${fontSize === 'text-base' ? 'bg-teal-600' : ''}`}>A</button>
+                                            <button onClick={() => setFontSize('text-lg')} className={`px-2 py-1 text-base ${fontSize === 'text-lg' ? 'bg-teal-600' : ''} rounded-r-md`}>A</button>
                                         </div>
                                     </div>
                                </div>
-                                <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-800'} transition-colors h-96 overflow-y-auto`}><p className={`${fontSize} leading-relaxed whitespace-pre-line transition-all`}>{currentChapter.content}</p></div>
+                                <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-slate-900 text-slate-300' : 'bg-white text-gray-800'} transition-colors h-96 overflow-y-auto`}><p className={`${fontSize} leading-relaxed whitespace-pre-line transition-all`}>{currentChapter.content}</p></div>
                                 <div className="mt-4">
                                   {!chapterQuiz ? (
-                                      <button onClick={() => handleGenerateQuiz('chapter')} disabled={isGeneratingChapterQuiz} className="w-full bg-blue-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-800/50 flex items-center justify-center">
+                                      <button onClick={() => handleGenerateQuiz('chapter')} disabled={isGeneratingChapterQuiz} className="w-full bg-teal-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-800/50 flex items-center justify-center gap-2">
+                                          {isGeneratingChapterQuiz && <LoadingSpinner />}
                                           {isGeneratingChapterQuiz ? 'Generating Quiz...' : 'Quiz Yourself on This Chapter'}
                                       </button>
                                   ) : chapterQuiz.quiz && (
@@ -351,20 +362,23 @@ export const LibraryView: React.FC = () => {
                                 <h3 className="text-xl font-semibold text-sky-400">AI Book Summarizer</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="text-xs font-medium text-gray-400 block mb-1">Content</label>
-                                        <select value={summaryChapter} onChange={e => setSummaryChapter(e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"><option value="full">Full Book</option>{selectedBook.chapters.map((chap, i) => <option key={i} value={i}>{chap.title}</option>)}</select>
+                                        <label className="text-xs font-medium text-slate-400 block mb-1">Content</label>
+                                        <select value={summaryChapter} onChange={e => setSummaryChapter(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"><option value="full">Full Book</option>{selectedBook.chapters.map((chap, i) => <option key={i} value={i}>{chap.title}</option>)}</select>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-medium text-gray-400 block mb-1">Format</label>
-                                        <select value={summaryType} onChange={e => setSummaryType(e.target.value as any)} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"><option value="paragraph">Paragraph</option><option value="bullets">Bullet Points</option><option value="concept-map">Concept Map</option></select>
+                                        <label className="text-xs font-medium text-slate-400 block mb-1">Format</label>
+                                        <select value={summaryType} onChange={e => setSummaryType(e.target.value as any)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"><option value="paragraph">Paragraph</option><option value="bullets">Bullet Points</option><option value="concept-map">Concept Map</option></select>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-medium text-gray-400 block mb-1">Purpose</label>
-                                        <input type="text" value={summaryPurpose} onChange={e => setSummaryPurpose(e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                                        <label className="text-xs font-medium text-slate-400 block mb-1">Purpose</label>
+                                        <input type="text" value={summaryPurpose} onChange={e => setSummaryPurpose(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"/>
                                     </div>
                                 </div>
-                                <button onClick={handleGenerateSummary} disabled={isSummarizing} className="w-full bg-blue-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-800/50 flex items-center justify-center">{isSummarizing ? 'Summarizing...' : 'Generate Summary'}</button>
-                                {isSummarizing && <div className="text-center text-gray-400">AI is reading and summarizing... Please wait.</div>}
+                                <button onClick={handleGenerateSummary} disabled={isSummarizing} className="w-full bg-teal-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-800/50 flex items-center justify-center gap-2">
+                                    {isSummarizing && <LoadingSpinner />}
+                                    {isSummarizing ? 'Summarizing...' : 'Generate Summary'}
+                                </button>
+                                {isSummarizing && <div className="text-center text-slate-400 flex items-center justify-center gap-2 mt-2"><LoadingSpinner /> AI is reading and summarizing... Please wait.</div>}
                                 {summaryError && <div className="text-red-400 whitespace-pre-wrap">{summaryError}</div>}
                                 {summaryContent && <SummaryResults summaryContent={summaryContent} summaryType={summaryType} title={selectedBook.title} onGenerateQuiz={() => handleGenerateQuiz('summary')} isGeneratingQuiz={isGeneratingSummaryQuiz} />}
                                 {summaryQuiz?.quiz && <QuizDisplay quizData={summaryQuiz.quiz} onTryAgain={() => setSummaryQuiz(null)} />}
@@ -374,9 +388,9 @@ export const LibraryView: React.FC = () => {
                         {activeTab === 'details' && (
                             <div className="space-y-6">
                                 <div><h3 className="text-xl font-semibold text-sky-400 mb-2">Details</h3><div className="text-sm space-y-2"><p><strong>Genre:</strong> {selectedBook.genre}</p><p><strong>Level:</strong> {selectedBook.level}</p><p><strong>Est. Reading Time:</strong> {selectedBook.readingTime}</p></div></div>
-                                <div><h3 className="text-xl font-semibold text-sky-400 mb-2">Summary</h3><p className="text-sm text-gray-400 leading-relaxed">{selectedBook.summary}</p></div>
-                                <div><h3 className="text-xl font-semibold text-sky-400 mb-2">Download Full Book</h3><div className="flex gap-4"><button onClick={() => handleDownloadFullBook('pdf')} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-md"><DownloadIcon /> PDF</button><button onClick={() => handleDownloadFullBook('docx')} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-md"><DownloadIcon /> DOCX</button></div></div>
-                                <div><h3 className="text-xl font-semibold text-sky-400 mb-2">Related Books (AI-Powered)</h3>{isLoadingRecs ? <p className="text-sm text-gray-400">Finding recommendations...</p> : (<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">{recommendations.map(book => (<BookCard key={book.id} book={book} onSelect={() => setSelectedBook(book)} />))}</div>)}</div>
+                                <div><h3 className="text-xl font-semibold text-sky-400 mb-2">Summary</h3><p className="text-sm text-slate-400 leading-relaxed">{selectedBook.summary}</p></div>
+                                <div><h3 className="text-xl font-semibold text-sky-400 mb-2">Download Full Book</h3><div className="flex gap-4"><button onClick={() => handleDownloadFullBook('pdf')} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md"><DownloadIcon /> PDF</button><button onClick={() => handleDownloadFullBook('docx')} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md"><DownloadIcon /> DOCX</button></div></div>
+                                <div><h3 className="text-xl font-semibold text-sky-400 mb-2">Related Books (AI-Powered)</h3>{isLoadingRecs ? <p className="text-sm text-slate-400">Finding recommendations...</p> : (<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">{recommendations.length > 0 ? recommendations.map(book => (<BookCard key={book.id} book={book} onSelect={() => setSelectedBook(book)} />)) : <p className='text-sm text-slate-500 col-span-full'>No recommendations found.</p>}</div>)}</div>
                             </div>
                         )}
                     </div>
@@ -387,12 +401,12 @@ export const LibraryView: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-6 bg-black/20 overflow-y-auto">
+    <div className="flex-1 flex flex-col p-6 bg-slate-900/50 overflow-y-auto">
       <h1 className="text-2xl font-bold text-white mb-6">Digital Library</h1>
       <div className="relative mb-6">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search for books by title, author, or genre..." className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-10 pr-10 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-        <button onClick={isListening ? stopListening : startListening} className={`absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white ${isListening ? 'text-blue-400 animate-pulse' : ''}`}><MicrophoneIcon /></button>
+        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search for books by title, author, or genre..." className="w-full bg-slate-800 border border-slate-700 rounded-md py-2 pl-10 pr-10 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+        <button onClick={isListening ? stopListening : startListening} className={`absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white ${isListening ? 'text-teal-400 animate-pulse' : ''}`}><MicrophoneIcon /></button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {filteredBooks.map(book => (<BookCard key={book.id} book={book} onSelect={() => setSelectedBook(book)} />))}

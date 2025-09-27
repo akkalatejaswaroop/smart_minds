@@ -9,7 +9,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import type { OutputType, GeneratedContent, QuizQuestion } from '../types';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { exportAsPdf, exportAsDocx } from '../utils/export';
-import { CopyIcon, DownloadIcon, SquareIcon, Volume2Icon } from './icons';
+import { CopyIcon, DownloadIcon, SquareIcon, Volume2Icon, ClipboardCodeIcon } from './icons';
 import { renderSimpleMarkdown } from '../utils/markdown';
 
 interface ContentDisplayProps {
@@ -26,12 +26,14 @@ interface ContentDisplayProps {
   conceptName?: string;
 }
 
-const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Mandarin', 'Telugu'];
+const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Mandarin', 'Telugu', 'Japanese', 'Korean', 'Russian'];
 const PURPOSES = [
     'preparing for a college exam',
     'understanding a new topic',
     'reviewing for a quiz',
-    'getting a quick summary'
+    'getting a quick summary',
+    'teaching a class',
+    'creating study notes'
 ];
 
 // --- Reusable Quiz Component ---
@@ -69,7 +71,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
     };
 
     if (!quizData) {
-        return <div className="text-center text-gray-400">Loading quiz...</div>;
+        return <div className="text-center text-slate-400">Loading quiz...</div>;
     }
 
     return (
@@ -77,18 +79,18 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
             {!isQuizSubmitted ? (
                 <>
                     {quizData.map((q, qIndex) => (
-                        <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                        <div key={qIndex} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                             <p className="font-semibold mb-3">{qIndex + 1}. {q.question}</p>
                             <div className="space-y-2">
                                 {q.options.map((option, oIndex) => (
-                                    <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-gray-700 cursor-pointer">
+                                    <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-slate-700 cursor-pointer">
                                         <input
                                             type="radio"
                                             name={`question-${qIndex}`}
                                             value={option}
                                             onChange={() => handleAnswerChange(qIndex, option)}
                                             checked={userAnswers[qIndex] === option}
-                                            className="mr-3 h-4 w-4 bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600"
+                                            className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-teal-500 focus:ring-teal-600"
                                         />
                                         <span>{option}</span>
                                     </label>
@@ -98,7 +100,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                     ))}
                     <button 
                       onClick={handleSubmitQuiz} 
-                      className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                      className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-teal-700 transition-colors"
                     >
                         Submit Quiz
                     </button>
@@ -107,28 +109,28 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                 <>
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-bold text-white">Quiz Results</h2>
-                        <p className="text-lg text-blue-400">You scored {quizScore} out of {quizData.length}</p>
+                        <p className="text-lg text-teal-400">You scored {quizScore} out of {quizData.length}</p>
                     </div>
                     {quizData.map((q, qIndex) => {
                         const userAnswer = userAnswers[qIndex];
                         const isCorrect = userAnswer === q.answer;
                         return (
-                            <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 mb-4">
+                            <div key={qIndex} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 mb-4">
                                 <p className="font-semibold mb-2">{qIndex + 1}. {q.question}</p>
                                 <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
                                     Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}
                                 </p>
-                                 {!isCorrect && <p className="text-sm text-gray-300">Correct answer: {q.answer}</p>}
-                                <div className="mt-3 pt-3 border-t border-gray-700">
+                                 {!isCorrect && <p className="text-sm text-slate-300">Correct answer: {q.answer}</p>}
+                                <div className="mt-3 pt-3 border-t border-slate-700">
                                     <p className="text-sm font-semibold text-sky-400">Explanation:</p>
-                                    <p className="text-sm text-gray-400">{q.explanation}</p>
+                                    <p className="text-sm text-slate-400">{q.explanation}</p>
                                 </div>
                             </div>
                         );
                     })}
                     <button 
                       onClick={handleTryAgain} 
-                      className="w-full bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-500 transition-colors"
+                      className="w-full bg-slate-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-slate-500 transition-colors"
                     >
                         Try Again
                     </button>
@@ -155,6 +157,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   const mermaidRef = useRef<HTMLDivElement>(null);
   const [mermaidSvg, setMermaidSvg] = useState('');
   const [isCopied, setIsCopied] = useState(false);
+  const [isCodeCopied, setIsCodeCopied] = useState(false);
 
   const plainTextContent = generatedContent?.text || '';
   const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(plainTextContent, language);
@@ -182,6 +185,15 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
       });
     }
   };
+  
+  const handleCopyCode = () => {
+    if (generatedContent?.mermaidCode) {
+        navigator.clipboard.writeText(generatedContent.mermaidCode).then(() => {
+            setIsCodeCopied(true);
+            setTimeout(() => setIsCodeCopied(false), 2000);
+        });
+    }
+  };
 
   const handlePdfExport = () => {
     if (contentRef.current) {
@@ -204,16 +216,16 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col p-6 bg-black/20 overflow-y-auto">
+    <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-y-auto">
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center bg-gray-800/50 rounded-lg p-1">
+        <div className="flex items-center bg-slate-800 rounded-lg p-1 flex-wrap">
           {(['explanation', 'presentation', 'examples', 'summary', 'quiz', 'concept-map'] as const).map((type) => (
             <button
               key={type}
               onClick={() => setOutputType(type)}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                outputType === type ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                outputType === type ? 'bg-teal-600 text-white' : 'text-slate-300 hover:bg-slate-700'
               }`}
               aria-pressed={outputType === type}
             >
@@ -227,7 +239,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
             <select
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
             >
               {PURPOSES.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
             </select>
@@ -235,7 +247,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
           <select 
             value={language} 
             onChange={e => setLanguage(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
           >
             {LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
           </select>
@@ -243,7 +255,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
           <button
             onClick={onGenerate}
             disabled={isLoading}
-            className="bg-blue-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-800/50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="bg-teal-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-800/50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
               <>
@@ -261,8 +273,8 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
       </div>
 
       {/* Output */}
-      <div className="flex-1 bg-gray-900/70 rounded-lg p-6 overflow-y-auto relative border border-gray-800">
-        {isLoading && !generatedContent && <div className="text-center text-gray-400">Generating... Please wait.</div>}
+      <div className="flex-1 bg-slate-800 rounded-lg p-6 overflow-y-auto relative border border-slate-700">
+        {isLoading && !generatedContent && <div className="text-center text-slate-400">Generating... Please wait.</div>}
         {error && <div className="text-red-400 whitespace-pre-wrap">{error}</div>}
         
         {generatedContent && !isLoading && (
@@ -273,10 +285,10 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
               <div 
                   ref={contentRef} 
                   className="prose prose-invert max-w-none 
-                            prose-h1:text-blue-400 prose-h1:mb-4
-                            prose-h2:text-sky-400 prose-h2:border-b prose-h2:border-gray-700 prose-h2:pb-2 prose-h2:mt-8
+                            prose-h1:text-teal-400 prose-h1:mb-4
+                            prose-h2:text-sky-400 prose-h2:border-b prose-h2:border-slate-700 prose-h2:pb-2 prose-h2:mt-8
                             prose-h3:text-sky-500
-                            prose-strong:text-blue-300
+                            prose-strong:text-teal-300
                             prose-ul:list-disc prose-ul:pl-6
                             prose-ol:list-decimal prose-ol:pl-6
                             prose-li:my-1"
@@ -298,17 +310,22 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
       {/* Action Bar */}
       {generatedContent && !isLoading && !error && outputType !== 'quiz' && (
         <div className="flex items-center justify-end gap-2 mt-4">
-          <button onClick={handleCopy} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label="Copy to clipboard">
+          {outputType === 'concept-map' && (
+             <button onClick={handleCopyCode} className="flex items-center gap-2 p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Copy Mermaid Code">
+                <span className="text-sm">{isCodeCopied ? 'Copied!' : 'Copy Code'}</span><ClipboardCodeIcon />
+            </button>
+          )}
+          <button onClick={handleCopy} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Copy to clipboard">
             <span className="text-sm mr-2">{isCopied ? 'Copied!' : ''}</span><CopyIcon />
           </button>
-          <button onClick={handlePdfExport} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label="Download as PDF">
+          <button onClick={handlePdfExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Download as PDF">
             <DownloadIcon /><span className="ml-1 text-xs">PDF</span>
           </button>
-           <button onClick={handleDocxExport} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label="Download as DOCX">
+           <button onClick={handleDocxExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Download as DOCX">
             <DownloadIcon /><span className="ml-1 text-xs">DOCX</span>
           </button>
           {isAvailable && (
-            <button onClick={handleTtsToggle} className="p-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300" aria-label={isSpeaking ? "Stop text-to-speech" : "Start text-to-speech"}>
+            <button onClick={handleTtsToggle} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label={isSpeaking ? "Stop text-to-speech" : "Start text-to-speech"}>
               {isSpeaking ? <SquareIcon /> : <Volume2Icon />}
             </button>
           )}
