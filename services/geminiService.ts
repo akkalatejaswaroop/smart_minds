@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import type { OutputType, GeneratedContent } from '../types';
+import type { OutputType, GeneratedContent, Book } from '../types';
 
 export interface GenerateContentParams {
   outputType: OutputType;
@@ -9,35 +9,27 @@ export interface GenerateContentParams {
   language: string;
 }
 
+export interface GenerateSummaryParams {
+    bookTitle: string;
+    content: string;
+    scope: string; // e.g., 'the entire book' or 'the chapter "Introduction"'
+    format: 'paragraph' | 'bullets' | 'concept-map';
+    purpose: string;
+    language: string;
+}
+
+
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const model = 'gemini-2.5-flash';
 
 const PROMPT_TEMPLATES = {
   explanation: `
-Generate a comprehensive educational guide for the concept '{concept}' within the subject '{subject}'. 
-The target audience is a student '{purpose}'. The tone should be academic, clear, and encouraging.
+Generate a concise explanation for the concept '{concept}' within the subject '{subject}'. 
+The target audience is a student '{purpose}'.
+The explanation should be clear, easy to understand, and focused, similar in length and detail to a '5-mark' answer in an exam. Avoid unnecessary jargon or overly deep dives.
 Respond in {language}.
 
-Format the entire response using Markdown. Structure the guide with the following sections, using the exact headings provided:
-
-# {concept}
-
-## Learning Objectives
-- After studying this material, you should be able to:
-- (List 3-4 specific, measurable learning outcomes)
-
-## Core Concepts
-- (Provide a detailed, step-by-step explanation of the concept.)
-- (Use subheadings with '###' for breaking down complex parts.)
-- (Use bullet points, numbered lists, and **bold text** to improve clarity.)
-
-## Key Takeaways
-- (Summarize the 3-5 most critical points in a concise bulleted list.)
-
-## Practice Questions
-- (Provide 2-3 practice questions to test understanding.)
-- (Include a mix of question types, like multiple-choice or short-answer.)
-- (Provide the correct answer and a brief explanation for each question.)
+Format the response using simple Markdown. Use a main heading for the concept, followed by bullet points or short paragraphs for the key points.
 `,
   presentation: `
 Generate a professional presentation script for the concept '{concept}' from '{subject}'.
@@ -221,4 +213,105 @@ export const generateQuiz = async ({
   });
   const jsonString = response.text.trim();
   return JSON.parse(jsonString);
+};
+
+export const generateQuizFromContent = async (content: string): Promise<GeneratedContent> => {
+    const prompt = `Generate an interactive multiple-choice quiz with 3 questions based on the following text. For each question, provide 4 options, the correct answer, and an explanation. Respond ONLY with a valid JSON object with a "quiz" key.
+    
+    Text: """${content}"""`;
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: QUIZ_SCHEMA,
+        },
+    });
+    const jsonString = response.text.trim();
+    return JSON.parse(jsonString);
+}
+
+export const generateBookSummary = async (params: GenerateSummaryParams): Promise<GeneratedContent> => {
+    const formatInstruction = {
+        paragraph: 'Provide a well-structured summary in paragraph form. Format using Markdown.',
+        bullets: 'Provide a summary as a well-structured, nested bulleted list. Format using Markdown.',
+        'concept-map': 'Provide a summary and a Mermaid.js concept map. Respond ONLY with a valid JSON object with keys "summary" and "mermaidCode". The mermaidCode should be a "graph TD" flowchart.'
+    }[params.format];
+
+    const prompt = `
+    You are an expert academic summarizer.
+    Summarize the following content from the book '${params.bookTitle}'.
+    The user wants to summarize: ${params.scope}.
+    The desired format is: ${params.format}.
+    The summary should be tailored for this purpose: '${params.purpose}'.
+    Respond in ${params.language}.
+
+    --- INSTRUCTIONS ---
+    ${formatInstruction}
+
+    --- CONTENT TO SUMMARIZE ---
+    ${params.content}
+    `;
+
+    if (params.format === 'concept-map') {
+        const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: CONCEPT_MAP_SCHEMA,
+            },
+        });
+        const jsonString = response.text.trim();
+        return JSON.parse(jsonString);
+    } else {
+        const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+        });
+        return { text: response.text };
+    }
+};
+
+export const generateRecommendations = async (currentBook: Book, allBooks: Book[]): Promise<Book[]> => {
+    const booklist = allBooks
+        .filter(b => b.id !== currentBook.id)
+        .map(b => `- ${b.title} by ${b.author} (Genre: ${b.genre}, Level: ${b.level}) (id: ${b.id})`)
+        .join('\n');
+
+    const prompt = `
+    Based on the book "${currentBook.title}" (Genre: ${currentBook.genre}, Summary: ${currentBook.summary}), recommend 3 other relevant books from the following list.
+    
+    Available books:
+    ${booklist}
+    
+    Respond ONLY with a JSON object containing a single key "recommendations", which is an array of the integer IDs of the recommended books. Example: {"recommendations": [2, 5, 8]}`;
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    recommendations: {
+                        type: Type.ARRAY,
+                        items: { type: Type.INTEGER }
+                    }
+                },
+                required: ['recommendations']
+            }
+        },
+    });
+    
+    try {
+      const result = JSON.parse(response.text.trim());
+      const recommendedIds: number[] = result.recommendations || [];
+      return allBooks.filter(book => recommendedIds.includes(book.id));
+    } catch (e) {
+      console.error("Failed to parse recommendations:", e);
+      // Fallback to simple genre-based recommendation
+      return allBooks.filter(b => b.genre === currentBook.genre && b.id !== currentBook.id).slice(0, 3);
+    }
 };

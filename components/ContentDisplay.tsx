@@ -6,7 +6,7 @@ declare global {
 }
 
 import React, { useRef, useEffect, useState } from 'react';
-import type { OutputType, GeneratedContent } from '../types';
+import type { OutputType, GeneratedContent, QuizQuestion } from '../types';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { exportAsPdf, exportAsDocx } from '../utils/export';
 import { CopyIcon, DownloadIcon, SquareIcon, Volume2Icon } from './icons';
@@ -34,6 +34,110 @@ const PURPOSES = [
     'getting a quick summary'
 ];
 
+// --- Reusable Quiz Component ---
+const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
+    const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+    const [isQuizSubmitted, setIsQuizSubmitted] = useState<boolean>(false);
+    const [quizScore, setQuizScore] = useState<number>(0);
+    
+    // Reset state when quiz data changes
+    useEffect(() => {
+        setUserAnswers({});
+        setIsQuizSubmitted(false);
+        setQuizScore(0);
+    }, [quizData]);
+
+    const handleAnswerChange = (questionIndex: number, answer: string) => {
+        setUserAnswers(prev => ({ ...prev, [questionIndex]: answer }));
+    };
+  
+    const handleSubmitQuiz = () => {
+        let score = 0;
+        quizData.forEach((q, index) => {
+            if (userAnswers[index] === q.answer) {
+                score++;
+            }
+        });
+        setQuizScore(score);
+        setIsQuizSubmitted(true);
+    };
+  
+    const handleTryAgain = () => {
+        setUserAnswers({});
+        setIsQuizSubmitted(false);
+        setQuizScore(0);
+    };
+
+    if (!quizData) {
+        return <div className="text-center text-gray-400">Loading quiz...</div>;
+    }
+
+    return (
+        <div className="space-y-8">
+            {!isQuizSubmitted ? (
+                <>
+                    {quizData.map((q, qIndex) => (
+                        <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                            <p className="font-semibold mb-3">{qIndex + 1}. {q.question}</p>
+                            <div className="space-y-2">
+                                {q.options.map((option, oIndex) => (
+                                    <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-gray-700 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name={`question-${qIndex}`}
+                                            value={option}
+                                            onChange={() => handleAnswerChange(qIndex, option)}
+                                            checked={userAnswers[qIndex] === option}
+                                            className="mr-3 h-4 w-4 bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600"
+                                        />
+                                        <span>{option}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                    <button 
+                      onClick={handleSubmitQuiz} 
+                      className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                        Submit Quiz
+                    </button>
+                </>
+            ) : (
+                <>
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-bold text-white">Quiz Results</h2>
+                        <p className="text-lg text-blue-400">You scored {quizScore} out of {quizData.length}</p>
+                    </div>
+                    {quizData.map((q, qIndex) => {
+                        const userAnswer = userAnswers[qIndex];
+                        const isCorrect = userAnswer === q.answer;
+                        return (
+                            <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 mb-4">
+                                <p className="font-semibold mb-2">{qIndex + 1}. {q.question}</p>
+                                <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                                    Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}
+                                </p>
+                                 {!isCorrect && <p className="text-sm text-gray-300">Correct answer: {q.answer}</p>}
+                                <div className="mt-3 pt-3 border-t border-gray-700">
+                                    <p className="text-sm font-semibold text-sky-400">Explanation:</p>
+                                    <p className="text-sm text-gray-400">{q.explanation}</p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    <button 
+                      onClick={handleTryAgain} 
+                      className="w-full bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-500 transition-colors"
+                    >
+                        Try Again
+                    </button>
+                </>
+            )}
+        </div>
+    );
+};
+
 export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   outputType,
   setOutputType,
@@ -52,22 +156,8 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   const [mermaidSvg, setMermaidSvg] = useState('');
   const [isCopied, setIsCopied] = useState(false);
 
-  // Quiz state
-  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
-  const [isQuizSubmitted, setIsQuizSubmitted] = useState<boolean>(false);
-  const [quizScore, setQuizScore] = useState<number>(0);
-  
   const plainTextContent = generatedContent?.text || '';
   const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(plainTextContent, language);
-
-  useEffect(() => {
-    // Reset quiz state when content changes or output type changes to quiz
-    if (outputType === 'quiz' || !generatedContent) {
-      setUserAnswers({});
-      setIsQuizSubmitted(false);
-      setQuizScore(0);
-    }
-  }, [generatedContent, outputType]);
 
   useEffect(() => {
     const renderMermaid = async () => {
@@ -112,99 +202,6 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
       speak();
     }
   }
-
-  const handleAnswerChange = (questionIndex: number, answer: string) => {
-    setUserAnswers(prev => ({ ...prev, [questionIndex]: answer }));
-  };
-  
-  const handleSubmitQuiz = () => {
-    if (!generatedContent?.quiz) return;
-    let score = 0;
-    generatedContent.quiz.forEach((q, index) => {
-      if (userAnswers[index] === q.answer) {
-        score++;
-      }
-    });
-    setQuizScore(score);
-    setIsQuizSubmitted(true);
-  };
-  
-  const handleTryAgain = () => {
-    setUserAnswers({});
-    setIsQuizSubmitted(false);
-    setQuizScore(0);
-  };
-
-  const renderQuiz = () => {
-      if (!generatedContent?.quiz) {
-          return <div className="text-center text-gray-400">Loading quiz...</div>;
-      }
-
-      return (
-          <div className="space-y-8">
-              {!isQuizSubmitted ? (
-                  <>
-                      {generatedContent.quiz.map((q, qIndex) => (
-                          <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                              <p className="font-semibold mb-3">{qIndex + 1}. {q.question}</p>
-                              <div className="space-y-2">
-                                  {q.options.map((option, oIndex) => (
-                                      <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-gray-700 cursor-pointer">
-                                          <input
-                                              type="radio"
-                                              name={`question-${qIndex}`}
-                                              value={option}
-                                              onChange={() => handleAnswerChange(qIndex, option)}
-                                              checked={userAnswers[qIndex] === option}
-                                              className="mr-3 h-4 w-4 bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600"
-                                          />
-                                          <span>{option}</span>
-                                      </label>
-                                  ))}
-                              </div>
-                          </div>
-                      ))}
-                      <button 
-                        onClick={handleSubmitQuiz} 
-                        className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-                      >
-                          Submit Quiz
-                      </button>
-                  </>
-              ) : (
-                  <>
-                      <div className="text-center mb-6">
-                          <h2 className="text-2xl font-bold text-white">Quiz Results</h2>
-                          <p className="text-lg text-blue-400">You scored {quizScore} out of {generatedContent.quiz.length}</p>
-                      </div>
-                      {generatedContent.quiz.map((q, qIndex) => {
-                          const userAnswer = userAnswers[qIndex];
-                          const isCorrect = userAnswer === q.answer;
-                          return (
-                              <div key={qIndex} className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 mb-4">
-                                  <p className="font-semibold mb-2">{qIndex + 1}. {q.question}</p>
-                                  <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                                      Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}
-                                  </p>
-                                   {!isCorrect && <p className="text-sm text-gray-300">Correct answer: {q.answer}</p>}
-                                  <div className="mt-3 pt-3 border-t border-gray-700">
-                                      <p className="text-sm font-semibold text-sky-400">Explanation:</p>
-                                      <p className="text-sm text-gray-400">{q.explanation}</p>
-                                  </div>
-                              </div>
-                          );
-                      })}
-                      <button 
-                        onClick={handleTryAgain} 
-                        className="w-full bg-gray-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-500 transition-colors"
-                      >
-                          Try Again
-                      </button>
-                  </>
-              )}
-          </div>
-      );
-  };
 
   return (
     <div className="flex-1 flex flex-col p-6 bg-black/20 overflow-y-auto">
@@ -270,8 +267,8 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
         
         {generatedContent && !isLoading && (
           <>
-            {outputType === 'quiz' ? (
-              renderQuiz()
+            {outputType === 'quiz' && generatedContent.quiz ? (
+              <QuizDisplay quizData={generatedContent.quiz} />
             ) : (
               <div 
                   ref={contentRef} 

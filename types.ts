@@ -1,3 +1,20 @@
+export interface Chapter {
+  title: string;
+  content: string;
+}
+
+export interface Book {
+  id: number;
+  title: string;
+  author: string;
+  coverImage: string; // URL
+  genre: string;
+  level: string; // e.g., 'Beginner', 'Intermediate'
+  readingTime: string; // e.g., '5 hours'
+  summary: string;
+  chapters: Chapter[];
+}
+
 export interface Concept {
   name: string;
 }

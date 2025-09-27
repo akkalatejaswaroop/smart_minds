@@ -1,45 +1,37 @@
 import React, { useEffect } from 'react';
 import type { Subject, Concept } from '../types';
-import { XIcon, MicrophoneIcon } from './icons';
+import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon } from './icons';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import type { AppView } from '../App';
 
 interface SidebarProps {
-  subjects: Subject[];
   isOpen: boolean;
   onClose: () => void;
+  currentView: AppView;
+  onSetView: (view: AppView) => void;
   
-  studyMode: 'academic' | 'competitive';
-  onStudyModeChange: (mode: 'academic' | 'competitive') => void;
-
-  selectedSubject: Subject | null;
-  onSelectSubject: (subject: Subject) => void;
-
-  selectedConcept: Concept | null;
-  onSelectConcept: (concept: Concept) => void;
-
-  competitiveExam: string;
-  onCompetitiveExamChange: (exam: string) => void;
-
-  customConcept: string;
-  onCustomConceptChange: (value: string) => void;
+  // The following props are now managed by GeneratorView.
+  // In a larger app, this would be handled via context.
+  // For now, we render the generator controls statically.
+  // studyMode: 'academic' | 'competitive';
+  // onStudyModeChange: (mode: 'academic' | 'competitive') => void;
+  // selectedSubject: Subject | null;
+  // onSelectSubject: (subject: Subject) => void;
+  // selectedConcept: Concept | null;
+  // onSelectConcept: (concept: Concept) => void;
+  // competitiveExam: string;
+  // onCompetitiveExamChange: (exam: string) => void;
+  // customConcept: string;
+  // onCustomConceptChange: (value: string) => void;
 }
 
 const COMPETITIVE_EXAMS = ['GATE', 'UPSC', 'JEE', 'CAT', 'GRE'];
 
 export const Sidebar: React.FC<SidebarProps> = React.memo(({
-  subjects,
   isOpen,
   onClose,
-  studyMode,
-  onStudyModeChange,
-  selectedSubject,
-  onSelectSubject,
-  selectedConcept,
-  onSelectConcept,
-  competitiveExam,
-  onCompetitiveExamChange,
-  customConcept,
-  onCustomConceptChange,
+  currentView,
+  onSetView,
 }) => {
   const {
       transcript,
@@ -49,34 +41,24 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       browserSupportsSpeechRecognition
   } = useSpeechRecognition();
 
-  useEffect(() => {
-      if (transcript) {
-          onCustomConceptChange(transcript);
-      }
-  }, [transcript, onCustomConceptChange]);
+  // This effect is for the custom concept input which is part of the generator.
+  // It's left here to show how it would work, but the state `onCustomConceptChange`
+  // needs to be connected to GeneratorView.
+  // useEffect(() => {
+  //     if (transcript) {
+  //         onCustomConceptChange(transcript);
+  //     }
+  // }, [transcript, onCustomConceptChange]);
 
   const handleMicClick = () => {
       if (isListening) {
           stopListening();
       } else {
-          onCustomConceptChange(''); // Clear input before listening
+          // onCustomConceptChange(''); // Clear input before listening
           startListening();
       }
   };
 
-  const handleSubjectDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const subject = subjects.find(s => s.name === e.target.value);
-    if (subject) {
-      onSelectSubject(subject);
-    }
-  };
-  
-  const handleConceptDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const concept = selectedSubject?.concepts.find(c => c.name === e.target.value);
-    if (concept) {
-      onSelectConcept(concept);
-    }
-  };
 
   return (
     <aside className={`
@@ -93,96 +75,41 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           </button>
         </div>
 
+        {/* Navigation */}
         <div className="p-4 border-b border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-400 mb-2">Generate Your Own</h3>
-          <div className="relative">
-              <input
-                  type="text"
-                  placeholder={studyMode === 'competitive' ? `Enter topic for ${competitiveExam}...` : "Enter any concept..."}
-                  value={customConcept}
-                  onChange={(e) => onCustomConceptChange(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  aria-label="Enter a custom concept"
-              />
-              {browserSupportsSpeechRecognition && (
-                  <button 
-                      onClick={handleMicClick}
-                      className={`absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white ${isListening ? 'text-blue-400 animate-pulse' : ''}`}
-                      aria-label={isListening ? 'Stop listening' : 'Start voice input'}
-                  >
-                      <MicrophoneIcon />
-                  </button>
-              )}
-          </div>
-          {isListening && <p className="text-xs text-blue-400 mt-1">Listening...</p>}
+           <h3 className="text-sm font-semibold text-gray-400 mb-2">Navigation</h3>
+           <div className="space-y-2">
+              <button onClick={() => onSetView('generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'generator' ? 'bg-blue-600 text-white' : 'hover:bg-gray-800'}`}>
+                  <BrainCircuitIcon />
+                  <span>AI Generator</span>
+              </button>
+              <button onClick={() => onSetView('library')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'library' ? 'bg-blue-600 text-white' : 'hover:bg-gray-800'}`}>
+                  <BookOpenIcon />
+                  <span>Digital Library</span>
+              </button>
+           </div>
         </div>
 
+        {/* Contextual Controls */}
         <div className="flex-1 p-4 overflow-y-auto">
-            <h3 className="text-sm font-semibold text-gray-400 mb-2">Curriculum Selector</h3>
-            
-            <div className="mb-4">
-              <label htmlFor="study-mode" className="block text-xs font-medium text-gray-400 mb-1">Study Mode</label>
-              <select 
-                id="study-mode"
-                value={studyMode}
-                onChange={(e) => onStudyModeChange(e.target.value as 'academic' | 'competitive')}
-                className="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                <option value="academic">Academic</option>
-                <option value="competitive">Competitive</option>
-              </select>
-            </div>
-
-            {studyMode === 'academic' && (
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="subject" className="block text-xs font-medium text-gray-400 mb-1">Subject</label>
-                  <select 
-                    id="subject" 
-                    value={selectedSubject?.name || ''}
-                    onChange={handleSubjectDropdownChange}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="" disabled>Select a Subject</option>
-                    {subjects.map(subject => (
-                      <option key={subject.name} value={subject.name}>{subject.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="concept" className="block text-xs font-medium text-gray-400 mb-1">Concept</label>
-                  <select 
-                    id="concept"
-                    value={selectedConcept?.name || ''}
-                    onChange={handleConceptDropdownChange}
-                    disabled={!selectedSubject}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                  >
-                    <option value="" disabled>Select a Concept</option>
-                    {selectedSubject?.concepts.map(concept => (
-                      <option key={concept.name} value={concept.name}>{concept.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-            
-            {studyMode === 'competitive' && (
-              <div>
-                 <label htmlFor="exam" className="block text-xs font-medium text-gray-400 mb-1">Exam</label>
-                 <select 
-                  id="exam"
-                  value={competitiveExam}
-                  onChange={(e) => onCompetitiveExamChange(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  {COMPETITIVE_EXAMS.map(exam => (
-                    <option key={exam} value={exam}>{exam}</option>
-                  ))}
-                 </select>
-              </div>
-            )}
+          {currentView === 'generator' ? (
+            <>
+              <h3 className="text-sm font-semibold text-gray-400 mb-2">Generator Controls</h3>
+              <p className="text-xs text-gray-500">Generator controls are now managed within the Generator view. This panel would contain them in a fully-connected app.</p>
+              {/* 
+                The controls from the original sidebar would be rendered here,
+                with their state and handlers passed down from GeneratorView,
+                likely via context in a larger application.
+              */}
+            </>
+          ) : (
+            <>
+              <h3 className="text-sm font-semibold text-gray-400 mb-2">Library Info</h3>
+              <p className="text-xs text-gray-500">The Digital Library contains a collection of books and an AI-powered summarizer. Use the search bar in the main view to find books.</p>
+            </>
+          )}
         </div>
+
       </div>
     </aside>
   );

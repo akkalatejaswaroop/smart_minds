@@ -51,3 +51,40 @@ export const MicrophoneIcon = () => (
         <line x1="8" y1="23" x2="16" y2="23"></line>
     </svg>
 );
+
+export const BookOpenIcon = ({ className = "w-5 h-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+    </svg>
+);
+
+export const BrainCircuitIcon = ({ className = "w-5 h-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 2a10 10 0 0 0-3.54 19.54" />
+      <path d="M12 22a10 10 0 0 1-3.54-19.54" />
+      <path d="M2 12h2.23" />
+      <path d="M19.77 12H22" />
+      <path d="M12 2v2.23" />
+      <path d="M12 19.77V22" />
+      <path d="M4.93 4.93l1.58 1.58" />
+      <path d="M17.49 17.49l1.58 1.58" />
+      <path d="M17.49 6.51l1.58-1.58" />
+      <path d="M4.93 19.07l1.58-1.58" />
+      <circle cx="12" cy="12" r="4" />
+    </svg>
+);
+
+export const SearchIcon = ({ className = "w-5 h-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+);
+
+export const ArrowLeftIcon = ({ className = "w-5 h-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+    </svg>
+);
