@@ -1,0 +1,7 @@
+{
+  "name": "SMART MINDS",
+  "description": "An AI-powered educational application to generate explanations, presentations, examples, and concept maps for various academic subjects, designed to promote digital literacy.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
