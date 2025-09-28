@@ -8,7 +8,7 @@ import { MicrophoneIcon } from './components/icons';
 
 const COMPETITIVE_EXAMS = ['GATE', 'UPSC', 'JEE', 'CAT', 'GRE'];
 
-export const GeneratorView: React.FC = () => {
+const GeneratorView: React.FC = () => {
   const [studyMode, setStudyMode] = useState<'academic' | 'competitive'>('academic');
   const [competitiveExam, setCompetitiveExam] = useState<string>('GATE');
   
@@ -147,8 +147,8 @@ export const GeneratorView: React.FC = () => {
             <div>
                 <label className="text-sm font-medium text-slate-400 block mb-2">Study Mode</label>
                 <div className="flex bg-slate-800 rounded-lg p-1">
-                    <button onClick={() => setStudyMode('academic')} className={`flex-1 px-3 py-1 text-sm font-medium rounded-md transition-colors ${studyMode === 'academic' ? 'bg-teal-600 text-white' : 'hover:bg-slate-700'}`}>Academic</button>
-                    <button onClick={() => setStudyMode('competitive')} className={`flex-1 px-3 py-1 text-sm font-medium rounded-md transition-colors ${studyMode === 'competitive' ? 'bg-teal-600 text-white' : 'hover:bg-slate-700'}`}>Competitive</button>
+                    <button onClick={() => setStudyMode('academic')} className={`flex-1 px-3 py-1 text-sm font-medium rounded-md transition-colors ${studyMode === 'academic' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-700'}`}>Academic</button>
+                    <button onClick={() => setStudyMode('competitive')} className={`flex-1 px-3 py-1 text-sm font-medium rounded-md transition-colors ${studyMode === 'competitive' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-700'}`}>Competitive</button>
                 </div>
             </div>
 
@@ -156,14 +156,14 @@ export const GeneratorView: React.FC = () => {
                 <>
                     <div>
                         <label htmlFor="subject-select" className="text-sm font-medium text-slate-400 block mb-2">Subject</label>
-                        <select id="subject-select" value={selectedSubject?.name || ''} onChange={e => setSelectedSubject(SUBJECTS.find(s => s.name === e.target.value) || null)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                        <select id="subject-select" value={selectedSubject?.name || ''} onChange={e => setSelectedSubject(SUBJECTS.find(s => s.name === e.target.value) || null)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                             {SUBJECTS.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
                         </select>
                     </div>
                     {selectedSubject && (
                         <div>
                             <label htmlFor="concept-select" className="text-sm font-medium text-slate-400 block mb-2">Concept</label>
-                            <select id="concept-select" value={selectedConcept?.name || ''} onChange={e => setSelectedConcept(selectedSubject.concepts.find(c => c.name === e.target.value) || null)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <select id="concept-select" value={selectedConcept?.name || ''} onChange={e => setSelectedConcept(selectedSubject.concepts.find(c => c.name === e.target.value) || null)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                                 {selectedSubject.concepts.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                             </select>
                         </div>
@@ -171,8 +171,8 @@ export const GeneratorView: React.FC = () => {
                      <div>
                         <label htmlFor="custom-concept-input" className="text-sm font-medium text-slate-400 block mb-2">Or Enter Custom Concept</label>
                         <div className="relative">
-                            <input id="custom-concept-input" type="text" value={customConcept} onChange={e => setCustomConcept(e.target.value)} placeholder="e.g., 'Quantum Entanglement'" className="w-full bg-slate-800 border border-slate-700 rounded-md py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"/>
-                            <button onClick={handleMicClick} className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white ${isListening ? 'text-teal-400 animate-pulse' : ''}`} aria-label="Use microphone to dictate concept">
+                            <input id="custom-concept-input" type="text" value={customConcept} onChange={e => setCustomConcept(e.target.value)} placeholder="e.g., 'Quantum Entanglement'" className="w-full bg-slate-800 border border-slate-700 rounded-md py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
+                            <button onClick={handleMicClick} className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white ${isListening ? 'text-indigo-400 animate-pulse' : ''}`} aria-label="Use microphone to dictate concept">
                               <MicrophoneIcon />
                             </button>
                         </div>
@@ -182,15 +182,15 @@ export const GeneratorView: React.FC = () => {
                 <>
                     <div>
                         <label htmlFor="exam-select" className="text-sm font-medium text-slate-400 block mb-2">Competitive Exam</label>
-                        <select id="exam-select" value={competitiveExam} onChange={e => setCompetitiveExam(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                        <select id="exam-select" value={competitiveExam} onChange={e => setCompetitiveExam(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                             {COMPETITIVE_EXAMS.map(exam => <option key={exam} value={exam}>{exam}</option>)}
                         </select>
                     </div>
                     <div>
                         <label htmlFor="custom-concept-input-comp" className="text-sm font-medium text-slate-400 block mb-2">Concept to Study</label>
                         <div className="relative">
-                            <input id="custom-concept-input-comp" type="text" value={customConcept} onChange={e => setCustomConcept(e.target.value)} placeholder="e.g., 'ACID Properties in DBMS'" className="w-full bg-slate-800 border border-slate-700 rounded-md py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"/>
-                            <button onClick={handleMicClick} className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white ${isListening ? 'text-teal-400 animate-pulse' : ''}`} aria-label="Use microphone to dictate concept">
+                            <input id="custom-concept-input-comp" type="text" value={customConcept} onChange={e => setCustomConcept(e.target.value)} placeholder="e.g., 'ACID Properties in DBMS'" className="w-full bg-slate-800 border border-slate-700 rounded-md py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
+                            <button onClick={handleMicClick} className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white ${isListening ? 'text-indigo-400 animate-pulse' : ''}`} aria-label="Use microphone to dictate concept">
                               <MicrophoneIcon />
                             </button>
                         </div>
@@ -216,3 +216,5 @@ export const GeneratorView: React.FC = () => {
     </div>
   );
 };
+
+export default GeneratorView;

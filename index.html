@@ -11,6 +11,7 @@
       mermaid.initialize({ startOnLoad: false });
       window.mermaid = mermaid;
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
     <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/html-to-docx-file-saver@1.8.0/dist/html-to-docx.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js" defer></script>
@@ -31,15 +32,15 @@
         height: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #0f172a; /* slate-900 */
+        background: #020617; /* slate-950 */
       }
       ::-webkit-scrollbar-thumb {
-        background-color: #334155; /* slate-700 */
+        background-color: #4338ca; /* indigo-700 */
         border-radius: 4px;
-        border: 2px solid #0f172a; /* slate-900 */
+        border: 2px solid #020617; /* slate-950 */
       }
        ::-webkit-scrollbar-thumb:hover {
-        background-color: #475569; /* slate-600 */
+        background-color: #4f46e5; /* indigo-600 */
       }
       .mermaid svg {
         margin: auto;
@@ -57,7 +58,7 @@
 }
 </script>
 </head>
-  <body class="bg-slate-900 text-slate-300">
+  <body class="bg-slate-950 text-slate-300">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

@@ -7,7 +7,7 @@ import { UploadCloudIcon, XIcon } from './components/icons';
 
 type InsightType = 'summary' | 'concepts' | 'characters' | 'highlights' | 'quiz' | 'concept-map' | 'tone-style' | 'glossary' | 'eli5' | 'discussion-questions';
 
-export const BookSummarizerView: React.FC = () => {
+const BookSummarizerView: React.FC = () => {
     const [analysisMode, setAnalysisMode] = useState<'title' | 'file'>('title');
     
     // Title Mode State
@@ -123,18 +123,18 @@ export const BookSummarizerView: React.FC = () => {
             {!submittedBook ? (
                 <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 max-w-3xl mx-auto w-full">
                     <div className="flex border-b border-slate-700 mb-4">
-                        <button onClick={() => setAnalysisMode('title')} className={`px-4 py-2 text-sm font-medium transition-colors ${analysisMode === 'title' ? 'border-b-2 border-teal-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Analyze by Title</button>
-                        <button onClick={() => setAnalysisMode('file')} className={`px-4 py-2 text-sm font-medium transition-colors ${analysisMode === 'file' ? 'border-b-2 border-teal-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Analyze from File</button>
+                        <button onClick={() => setAnalysisMode('title')} className={`px-4 py-2 text-sm font-medium transition-colors ${analysisMode === 'title' ? 'border-b-2 border-indigo-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Analyze by Title</button>
+                        <button onClick={() => setAnalysisMode('file')} className={`px-4 py-2 text-sm font-medium transition-colors ${analysisMode === 'file' ? 'border-b-2 border-indigo-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Analyze from File</button>
                     </div>
 
                     {analysisMode === 'title' ? (
                         <div className="flex flex-col sm:flex-row gap-2">
-                            <input type="text" value={bookInput} onChange={e => setBookInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAnalyze()} placeholder="e.g., 'The Great Gatsby' or 'Sapiens'" className="flex-grow bg-slate-800 border border-slate-600 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"/>
-                            <button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="bg-teal-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-800/50 disabled:cursor-not-allowed flex items-center justify-center">Analyze</button>
+                            <input type="text" value={bookInput} onChange={e => setBookInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAnalyze()} placeholder="e.g., 'The Great Gatsby' or 'Sapiens'" className="flex-grow bg-slate-800 border border-slate-600 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
+                            <button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center">Analyze</button>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <label htmlFor="file-upload" className="relative block w-full border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-teal-500 transition-colors">
+                            <label htmlFor="file-upload" className="relative block w-full border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors">
                                 <UploadCloudIcon className="mx-auto h-12 w-12 text-slate-500"/>
                                 <span className="mt-2 block text-sm font-semibold text-slate-300">
                                     {isFileReading ? 'Reading file...' : (uploadedFile ? `File: ${uploadedFile.name}` : 'Click to upload or drag and drop')}
@@ -145,7 +145,7 @@ export const BookSummarizerView: React.FC = () => {
                             {fileError && <p className="text-red-400 text-sm text-center">{fileError}</p>}
                             {(uploadedFile || isFileReading) && (
                                 <div className="flex items-center justify-center gap-4">
-                                    <button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="bg-teal-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-800/50 disabled:cursor-not-allowed flex items-center justify-center">
+                                    <button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center">
                                         {isFileReading ? <LoadingSpinner/> : 'Analyze'}
                                     </button>
                                     <button onClick={handleClearFile} className="p-2 text-slate-400 hover:text-white"><XIcon className="w-5 h-5"/></button>
@@ -167,27 +167,27 @@ export const BookSummarizerView: React.FC = () => {
                     </div>
 
                     <div className="space-y-4 bg-slate-800/50 p-6 rounded-lg border border-slate-700">
-                        <h3 className="text-xl font-semibold text-sky-400">Generator Controls</h3>
+                        <h3 className="text-xl font-semibold text-purple-400">Generator Controls</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label className="text-xs font-medium text-slate-400 block mb-1">Insight Type</label>
-                                <select value={insightType} onChange={e => setInsightType(e.target.value as any)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                                <select value={insightType} onChange={e => setInsightType(e.target.value as any)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                                     {insightOptions.map(opt => <option key={opt.value} value={opt.value} disabled={opt.disabled}>{opt.label}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="text-xs font-medium text-slate-400 block mb-1">Format</label>
-                                <select value={insightFormat} onChange={e => setInsightFormat(e.target.value as any)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none" disabled={!['summary', 'concepts'].includes(insightType)}>
+                                <select value={insightFormat} onChange={e => setInsightFormat(e.target.value as any)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" disabled={!['summary', 'concepts'].includes(insightType)}>
                                     <option value="paragraph">Paragraph</option>
                                     <option value="bullets">Bullet Points</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="text-xs font-medium text-slate-400 block mb-1">Purpose / Context</label>
-                                <input type="text" value={insightPurpose} onChange={e => setInsightPurpose(e.target.value)} placeholder="e.g., preparing for an exam" className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"/>
+                                <input type="text" value={insightPurpose} onChange={e => setInsightPurpose(e.target.value)} placeholder="e.g., preparing for an exam" className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
                             </div>
                         </div>
-                        <button onClick={handleAnalyze} disabled={isGenerating} className="w-full bg-teal-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-800/50 flex items-center justify-center gap-2">
+                        <button onClick={handleAnalyze} disabled={isGenerating} className="w-full bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 flex items-center justify-center gap-2">
                             {isGenerating && <LoadingSpinner />}
                             {isGenerating ? 'Regenerating...' : 'Regenerate'}
                         </button>
@@ -215,3 +215,5 @@ export const BookSummarizerView: React.FC = () => {
         </div>
     );
 };
+
+export default BookSummarizerView;

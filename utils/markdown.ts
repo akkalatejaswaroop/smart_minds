@@ -1,8 +1,18 @@
 export const renderSimpleMarkdown = (text: string): string => {
   if (!text) return '';
 
-  let html = text;
-
+  // Use a placeholder to protect code blocks from further processing
+  const codeBlocks: string[] = [];
+  let html = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+    const escapedCode = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const block = `<pre><code class="language-${lang}">${escapedCode}</code></pre>`;
+    codeBlocks.push(block);
+    return `__CODEBLOCK_${codeBlocks.length - 1}__`;
+  });
+  
   // Headers (e.g., ### Header)
   html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
   html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
@@ -27,6 +37,11 @@ export const renderSimpleMarkdown = (text: string): string => {
   // Cleanup spacing around block elements that were just created
   html = html.replace(/<br \/>(<[uo]l|<h[1-3]>)/g, '$1');
   html = html.replace(/(<\/[uo]l>|<\/h[1-3]>)<br \/>/g, '$1');
+
+  // Restore the code blocks
+  html = html.replace(/__CODEBLOCK_(\d+)__/g, (match, index) => {
+    return codeBlocks[parseInt(index, 10)];
+  });
 
   return html;
 };

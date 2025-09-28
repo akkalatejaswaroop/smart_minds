@@ -90,7 +90,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                                             value={option}
                                             onChange={() => handleAnswerChange(qIndex, option)}
                                             checked={userAnswers[qIndex] === option}
-                                            className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-teal-500 focus:ring-teal-600"
+                                            className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-indigo-500 focus:ring-indigo-600"
                                         />
                                         <span>{option}</span>
                                     </label>
@@ -100,7 +100,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                     ))}
                     <button 
                       onClick={handleSubmitQuiz} 
-                      className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-teal-700 transition-colors"
+                      className="w-full bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-600 transition-colors"
                     >
                         Submit Quiz
                     </button>
@@ -109,7 +109,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                 <>
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-bold text-white">Quiz Results</h2>
-                        <p className="text-lg text-teal-400">You scored {quizScore} out of {quizData.length}</p>
+                        <p className="text-lg text-purple-400">You scored {quizScore} out of {quizData.length}</p>
                     </div>
                     {quizData.map((q, qIndex) => {
                         const userAnswer = userAnswers[qIndex];
@@ -122,7 +122,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                                 </p>
                                  {!isCorrect && <p className="text-sm text-slate-300">Correct answer: {q.answer}</p>}
                                 <div className="mt-3 pt-3 border-t border-slate-700">
-                                    <p className="text-sm font-semibold text-sky-400">Explanation:</p>
+                                    <p className="text-sm font-semibold text-indigo-400">Explanation:</p>
                                     <p className="text-sm text-slate-400">{q.explanation}</p>
                                 </div>
                             </div>
@@ -159,13 +159,18 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isCodeCopied, setIsCodeCopied] = useState(false);
 
-  const plainTextContent = generatedContent?.text || '';
-  const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(plainTextContent, language);
+  const textToCopy = outputType === 'concept-map'
+    ? generatedContent?.summary || ''
+    : generatedContent?.text || '';
+
+  const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(textToCopy, language);
 
   useEffect(() => {
     const renderMermaid = async () => {
       if (outputType === 'concept-map' && generatedContent?.mermaidCode && mermaidRef.current) {
         try {
+          // Clear previous map to prevent duplicates
+          mermaidRef.current.innerHTML = '';
           const { svg } = await window.mermaid.render('mermaid-graph', generatedContent.mermaidCode);
           setMermaidSvg(svg);
         } catch (e) {
@@ -178,8 +183,8 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   }, [outputType, generatedContent]);
 
   const handleCopy = () => {
-    if (contentRef.current) {
-      navigator.clipboard.writeText(contentRef.current.innerText).then(() => {
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
       });
@@ -225,7 +230,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
               key={type}
               onClick={() => setOutputType(type)}
               className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                outputType === type ? 'bg-teal-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+                outputType === type ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700'
               }`}
               aria-pressed={outputType === type}
             >
@@ -239,7 +244,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
             <select
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+              className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               {PURPOSES.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
             </select>
@@ -247,7 +252,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
           <select 
             value={language} 
             onChange={e => setLanguage(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
             {LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
           </select>
@@ -255,11 +260,11 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
           <button
             onClick={onGenerate}
             disabled={isLoading}
-            className="bg-teal-600 text-white font-semibold px-5 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:bg-teal-800/50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -285,10 +290,10 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
               <div 
                   ref={contentRef} 
                   className="prose prose-invert max-w-none 
-                            prose-h1:text-teal-400 prose-h1:mb-4
-                            prose-h2:text-sky-400 prose-h2:border-b prose-h2:border-slate-700 prose-h2:pb-2 prose-h2:mt-8
-                            prose-h3:text-sky-500
-                            prose-strong:text-teal-300
+                            prose-h1:text-pink-400 prose-h1:mb-4
+                            prose-h2:text-purple-400 prose-h2:border-b prose-h2:border-slate-600 prose-h2:pb-2 prose-h2:mt-8
+                            prose-h3:text-indigo-400
+                            prose-strong:text-purple-300
                             prose-ul:list-disc prose-ul:pl-6
                             prose-ol:list-decimal prose-ol:pl-6
                             prose-li:my-1"

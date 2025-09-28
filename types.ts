@@ -50,3 +50,20 @@ export interface GeneratedContent {
     };
     glossary?: GlossaryTerm[];
 }
+
+// Types for new AI Tools
+export interface DebateArguments {
+  pro: string[];
+  con: string[];
+}
+
+export interface LearningPathModule {
+  moduleTitle: string;
+  description: string;
+  keyTopics: string[];
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}

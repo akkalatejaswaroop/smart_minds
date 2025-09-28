@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import type { OutputType, GeneratedContent, Book } from '../types';
+import type { OutputType, GeneratedContent, Book, DebateArguments, LearningPathModule } from '../types';
 
 export interface GenerateContentParams {
   outputType: OutputType;
@@ -207,6 +207,47 @@ const GLOSSARY_SCHEMA = {
     },
   },
   required: ['glossary'],
+};
+
+const DEBATE_SCHEMA = {
+    type: Type.OBJECT,
+    properties: {
+        pro: {
+            type: Type.ARRAY,
+            description: "An array of strings, with each string being a distinct argument for the topic.",
+            items: { type: Type.STRING }
+        },
+        con: {
+            type: Type.ARRAY,
+            description: "An array of strings, with each string being a distinct argument against the topic.",
+            items: { type: Type.STRING }
+        },
+    },
+    required: ["pro", "con"]
+};
+
+const LEARNING_PATH_SCHEMA = {
+    type: Type.OBJECT,
+    properties: {
+        path: {
+            type: Type.ARRAY,
+            description: "An array of learning module objects.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    moduleTitle: { type: Type.STRING, description: "The title of the learning module." },
+                    description: { type: Type.STRING, description: "A concise description of what to learn in this module." },
+                    keyTopics: { 
+                        type: Type.ARRAY, 
+                        description: "A list of key topics to cover in this module.",
+                        items: { type: Type.STRING } 
+                    }
+                },
+                required: ["moduleTitle", "description", "keyTopics"]
+            }
+        }
+    },
+    required: ["path"]
 };
 
 
@@ -452,4 +493,47 @@ export const generateRecommendations = async (currentBook: Book, allBooks: Book[
       // Fallback to simple genre-based recommendation
       return allBooks.filter(b => b.genre === currentBook.genre && b.id !== currentBook.id).slice(0, 3);
     }
+};
+
+export const generateDebateArguments = async (topic: string): Promise<DebateArguments> => {
+    const prompt = `Generate a debate on the topic '${topic}'. Provide a balanced set of three compelling arguments for the 'pro' side and three for the 'con' side. Respond ONLY with a valid JSON object with two keys: "pro" and "con", where each key contains an array of strings, with each string being a distinct argument.`;
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: DEBATE_SCHEMA,
+        },
+    });
+    const jsonString = response.text.trim();
+    return JSON.parse(jsonString);
+};
+
+export const generateLearningPath = async (goal: string): Promise<LearningPathModule[]> => {
+    const prompt = `Create a detailed, step-by-step learning path for a beginner wanting to achieve the goal: '${goal}'. The path should consist of several modules. For each module, provide a title, a concise description of what to learn, and a list of key topics to cover. Respond ONLY with a valid JSON object containing a 'path' key, which is an array of module objects. Each module object should have 'moduleTitle', 'description', and 'keyTopics' (an array of strings).`;
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: LEARNING_PATH_SCHEMA,
+        },
+    });
+    const { path } = JSON.parse(response.text.trim());
+    return path;
+};
+
+export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Promise<string> => {
+    const actionPrompt = action === 'explain'
+        ? "You are an expert code explainer. Analyze the following code snippet and provide a clear, line-by-line explanation of what it does. Also, provide a high-level summary of its purpose. Format the response using Markdown."
+        : "You are an expert code debugger. Analyze the following code snippet for potential bugs, errors, or improvements. If you find any issues, explain what they are and suggest a corrected version of the code. If the code looks correct, state that and suggest potential optimizations. Format the response using Markdown.";
+
+    const prompt = `${actionPrompt}\n\nHere is the code:\n\`\`\`\n${code}\n\`\`\``;
+    
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+    });
+    
+    return response.text;
 };

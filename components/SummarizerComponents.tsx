@@ -56,20 +56,20 @@ export const QuizDisplay: React.FC<{ quizData: QuizQuestion[], onTryAgain: () =>
                             <div className="space-y-2">
                                 {q.options.map((option, oIndex) => (
                                     <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-slate-700 cursor-pointer">
-                                        <input type="radio" name={`question-${qIndex}`} value={option} onChange={() => handleAnswerChange(qIndex, option)} checked={userAnswers[qIndex] === option} className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-teal-500 focus:ring-teal-600" />
+                                        <input type="radio" name={`question-${qIndex}`} value={option} onChange={() => handleAnswerChange(qIndex, option)} checked={userAnswers[qIndex] === option} className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-indigo-500 focus:ring-indigo-600" />
                                         <span>{option}</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
                     ))}
-                    <button onClick={handleSubmitQuiz} className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-teal-700 transition-colors">Submit Quiz</button>
+                    <button onClick={handleSubmitQuiz} className="w-full bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-600 transition-colors">Submit Quiz</button>
                 </>
             ) : (
                 <>
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-bold text-white">Quiz Results</h2>
-                        <p className="text-lg text-teal-400">You scored {quizScore} out of {quizData.length}</p>
+                        <p className="text-lg text-purple-400">You scored {quizScore} out of {quizData.length}</p>
                     </div>
                     {quizData.map((q, qIndex) => {
                         const userAnswer = userAnswers[qIndex];
@@ -80,7 +80,7 @@ export const QuizDisplay: React.FC<{ quizData: QuizQuestion[], onTryAgain: () =>
                                 <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}</p>
                                 {!isCorrect && <p className="text-sm text-slate-300">Correct answer: {q.answer}</p>}
                                 <div className="mt-3 pt-3 border-t border-slate-700">
-                                    <p className="text-sm font-semibold text-sky-400">Explanation:</p>
+                                    <p className="text-sm font-semibold text-indigo-400">Explanation:</p>
                                     <p className="text-sm text-slate-400">{q.explanation}</p>
                                 </div>
                             </div>
@@ -102,15 +102,23 @@ export const ResultsActionBar: React.FC<{
     const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(plainTextContent, 'English');
 
     const handleCopy = () => {
-        if (contentRef.current) {
-            navigator.clipboard.writeText(contentRef.current.innerText).then(() => {
+        if (plainTextContent) {
+            navigator.clipboard.writeText(plainTextContent).then(() => {
                 setIsCopied(true);
                 setTimeout(() => setIsCopied(false), 2000);
             });
         }
     };
-    const handlePdfExport = () => exportAsPdf(contentRef.current!, fileName);
-    const handleDocxExport = () => exportAsDocx(contentRef.current!, fileName);
+    const handlePdfExport = () => {
+        if (contentRef.current) {
+            exportAsPdf(contentRef.current, fileName);
+        }
+    };
+    const handleDocxExport = () => {
+        if (contentRef.current) {
+            exportAsDocx(contentRef.current, fileName);
+        }
+    };
     const handleTtsToggle = () => isSpeaking ? cancel() : speak();
     
     return (
@@ -141,19 +149,19 @@ export const HighlightsDisplay: React.FC<{ highlights: NonNullable<GeneratedCont
         <div className="mt-4 bg-slate-800 rounded-lg p-6 border border-slate-700">
             <div ref={contentRef} className="prose prose-invert max-w-none space-y-6">
                 <div>
-                    <h3 className="text-sky-400 border-b border-slate-700 pb-2">Key Ideas</h3>
+                    <h3 className="text-purple-400 border-b border-slate-700 pb-2">Key Ideas</h3>
                     <ul className="list-disc pl-5 space-y-2 mt-2">
                         {highlights.keyIdeas.map((idea, i) => <li key={i}>{idea}</li>)}
                     </ul>
                 </div>
                  <div>
-                    <h3 className="text-sky-400 border-b border-slate-700 pb-2">Notable Quotes</h3>
+                    <h3 className="text-purple-400 border-b border-slate-700 pb-2">Notable Quotes</h3>
                     <div className="space-y-4 mt-2">
-                        {highlights.quotes.map((quote, i) => <blockquote key={i} className="border-l-4 border-teal-500 pl-4 italic text-slate-400">{quote}</blockquote>)}
+                        {highlights.quotes.map((quote, i) => <blockquote key={i} className="border-l-4 border-indigo-500 pl-4 italic text-slate-400">{quote}</blockquote>)}
                     </div>
                 </div>
                  <div>
-                    <h3 className="text-sky-400 border-b border-slate-700 pb-2">Significant Passages</h3>
+                    <h3 className="text-purple-400 border-b border-slate-700 pb-2">Significant Passages</h3>
                     <div className="space-y-4 mt-2 text-slate-400">
                         {highlights.passages.map((passage, i) => <p key={i}>{passage}</p>)}
                     </div>
@@ -173,11 +181,11 @@ export const GlossaryDisplay: React.FC<{ glossary: GlossaryTerm[]; title: string
     return (
         <div className="mt-4 bg-slate-800 rounded-lg p-6 border border-slate-700">
             <div ref={contentRef} className="prose prose-invert max-w-none">
-                <h3 className="text-sky-400 border-b border-slate-700 pb-2">Key Terminology</h3>
+                <h3 className="text-purple-400 border-b border-slate-700 pb-2">Key Terminology</h3>
                 <dl className="mt-4 space-y-4">
                     {glossary.map((item, i) => (
                         <div key={i}>
-                            <dt className="font-bold text-teal-400">{item.term}</dt>
+                            <dt className="font-bold text-indigo-400">{item.term}</dt>
                             <dd className="text-slate-400 pl-4">{item.definition}</dd>
                         </div>
                     ))}
@@ -207,6 +215,7 @@ export const SummaryResults: React.FC<{
     const renderMermaid = async () => {
       if (summaryType === 'concept-map' && summaryContent?.mermaidCode && mermaidRef.current && window.mermaid) {
         try {
+          mermaidRef.current.innerHTML = '';
           const { svg } = await window.mermaid.render('mermaid-graph-summary', summaryContent.mermaidCode);
           setMermaidSvg(svg);
         } catch (e) {
@@ -232,7 +241,7 @@ export const SummaryResults: React.FC<{
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4 mt-4 pt-4 border-t border-slate-700">
         {onGenerateQuiz ? (
-             <button onClick={onGenerateQuiz} disabled={isGeneratingQuiz} className="bg-sky-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-sky-700 transition-colors disabled:bg-sky-800/50 flex items-center justify-center gap-2">
+             <button onClick={onGenerateQuiz} disabled={isGeneratingQuiz} className="bg-purple-700 text-white font-semibold px-4 py-2 rounded-md hover:bg-purple-600 transition-colors disabled:bg-purple-800/50 flex items-center justify-center gap-2">
                 {isGeneratingQuiz && <LoadingSpinner />}
                 {isGeneratingQuiz ? 'Generating Quiz...' : 'Quiz Yourself on This'}
             </button>

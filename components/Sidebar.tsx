@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Subject, Concept } from '../types';
-import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon } from './icons';
+import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon, ScaleIcon, MapIcon, MessageSquareIcon, CodeIcon } from './icons';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import type { AppView } from '../App';
 
@@ -9,23 +9,7 @@ interface SidebarProps {
   onClose: () => void;
   currentView: AppView;
   onSetView: (view: AppView) => void;
-  
-  // The following props are now managed by GeneratorView.
-  // In a larger app, this would be handled via context.
-  // For now, we render the generator controls statically.
-  // studyMode: 'academic' | 'competitive';
-  // onStudyModeChange: (mode: 'academic' | 'competitive') => void;
-  // selectedSubject: Subject | null;
-  // onSelectSubject: (subject: Subject) => void;
-  // selectedConcept: Concept | null;
-  // onSelectConcept: (concept: Concept) => void;
-  // competitiveExam: string;
-  // onCompetitiveExamChange: (exam: string) => void;
-  // customConcept: string;
-  // onCustomConceptChange: (value: string) => void;
 }
-
-const COMPETITIVE_EXAMS = ['GATE', 'UPSC', 'JEE', 'CAT', 'GRE'];
 
 export const Sidebar: React.FC<SidebarProps> = React.memo(({
   isOpen,
@@ -33,32 +17,14 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   currentView,
   onSetView,
 }) => {
-  const {
-      transcript,
-      isListening,
-      startListening,
-      stopListening,
-      browserSupportsSpeechRecognition
-  } = useSpeechRecognition();
 
-  // This effect is for the custom concept input which is part of the generator.
-  // It's left here to show how it would work, but the state `onCustomConceptChange`
-  // needs to be connected to GeneratorView.
-  // useEffect(() => {
-  //     if (transcript) {
-  //         onCustomConceptChange(transcript);
-  //     }
-  // }, [transcript, onCustomConceptChange]);
-
-  const handleMicClick = () => {
-      if (isListening) {
-          stopListening();
-      } else {
-          // onCustomConceptChange(''); // Clear input before listening
-          startListening();
-      }
-  };
-
+  const handleSetView = (view: AppView) => {
+    onSetView(view);
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 768) {
+      onClose();
+    }
+  }
 
   return (
     <aside className={`
@@ -79,41 +45,68 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         <div className="p-4 border-b border-slate-700">
            <h3 className="text-sm font-semibold text-slate-400 mb-2">Navigation</h3>
            <div className="space-y-2">
-              <button onClick={() => onSetView('generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'generator' ? 'bg-teal-600 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'generator' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
                   <BrainCircuitIcon />
-                  <span>AI Generator</span>
+                  <span>AI Content Generator</span>
               </button>
-              <button onClick={() => onSetView('library')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'library' ? 'bg-teal-600 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('library')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'library' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
                   <BookOpenIcon />
                   <span>Digital Library</span>
               </button>
-              <button onClick={() => onSetView('book-summarizer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'book-summarizer' ? 'bg-teal-600 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('book-summarizer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'book-summarizer' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
                   <FileTextIcon />
-                  <span>Book Summarizer</span>
+                  <span>Book & Doc Analyzer</span>
+              </button>
+           </div>
+        </div>
+        
+        {/* New AI Tools Navigation */}
+        <div className="p-4 border-b border-slate-700">
+           <h3 className="text-sm font-semibold text-slate-400 mb-2">AI Tools</h3>
+           <div className="space-y-2">
+              <button onClick={() => handleSetView('debate-generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'debate-generator' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+                  <ScaleIcon />
+                  <span>Debate Generator</span>
+              </button>
+              <button onClick={() => handleSetView('learning-path')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'learning-path' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+                  <MapIcon />
+                  <span>Learning Path Creator</span>
+              </button>
+              <button onClick={() => handleSetView('tutor-chat')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'tutor-chat' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+                  <MessageSquareIcon />
+                  <span>AI Tutor Chat</span>
+              </button>
+              <button onClick={() => handleSetView('code-explainer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'code-explainer' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+                  <CodeIcon />
+                  <span>Code Explainer</span>
               </button>
            </div>
         </div>
 
+
         {/* Contextual Controls */}
         <div className="flex-1 p-4 overflow-y-auto">
-          {currentView === 'generator' ? (
-            <>
-              <h3 className="text-sm font-semibold text-slate-400 mb-2">Generator Info</h3>
-              <p className="text-xs text-slate-500">Use the controls in the main view to select a topic and generate educational content like explanations, presentations, and quizzes.</p>
-            </>
-          ) : null}
-          {currentView === 'library' ? (
-            <>
-              <h3 className="text-sm font-semibold text-slate-400 mb-2">Library Info</h3>
-              <p className="text-xs text-slate-500">The Digital Library contains a collection of books and an AI-powered summarizer. Use the search bar in the main view to find books.</p>
-            </>
-          ) : null}
-          {currentView === 'book-summarizer' ? (
-            <>
-              <h3 className="text-sm font-semibold text-slate-400 mb-2">Book Summarizer Info</h3>
-              <p className="text-xs text-slate-500">Enter any book title to get AI-generated summaries, key concepts, character lists, quizzes, and more. This tool uses the model's broad knowledge to analyze books that are not in our digital library.</p>
-            </>
-          ) : null}
+          {currentView === 'generator' && (
+              <p className="text-xs text-slate-500">Generate educational content like explanations, presentations, and quizzes for academic or competitive exam topics.</p>
+          )}
+          {currentView === 'library' && (
+              <p className="text-xs text-slate-500">Explore the Digital Library, read books, and use the AI summarizer to understand key concepts quickly.</p>
+          )}
+          {currentView === 'book-summarizer' && (
+              <p className="text-xs text-slate-500">Analyze any book by its title or upload a document (PDF, DOCX) to get summaries, concept maps, quizzes, and more.</p>
+          )}
+          {currentView === 'debate-generator' && (
+              <p className="text-xs text-slate-500">Enter a topic to generate balanced arguments for both sides of a debate. A great tool for critical thinking.</p>
+          )}
+          {currentView === 'learning-path' && (
+              <p className="text-xs text-slate-500">Define a learning goal, and the AI will create a customized, step-by-step learning path to guide your studies.</p>
+          )}
+          {currentView === 'tutor-chat' && (
+              <p className="text-xs text-slate-500">Have a real-time conversation with an AI tutor. Ask questions and get clear explanations on any academic subject.</p>
+          )}
+          {currentView === 'code-explainer' && (
+              <p className="text-xs text-slate-500">Paste a code snippet to get a detailed explanation of how it works or to find and fix potential bugs.</p>
+          )}
         </div>
 
       </div>
