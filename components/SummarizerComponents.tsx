@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { GeneratedContent, QuizQuestion } from '../types';
+import type { GeneratedContent, QuizQuestion, GlossaryTerm } from '../types';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { exportAsPdf, exportAsDocx } from '../utils/export';
 import { CopyIcon, DownloadIcon, SquareIcon, Volume2Icon } from './icons';
@@ -166,9 +166,33 @@ export const HighlightsDisplay: React.FC<{ highlights: NonNullable<GeneratedCont
     );
 };
 
+export const GlossaryDisplay: React.FC<{ glossary: GlossaryTerm[]; title: string; }> = ({ glossary, title }) => {
+    const contentRef = useRef<HTMLDivElement>(null);
+    const plainTextContent = glossary.map(item => `${item.term}: ${item.definition}`).join('\n');
+
+    return (
+        <div className="mt-4 bg-slate-800 rounded-lg p-6 border border-slate-700">
+            <div ref={contentRef} className="prose prose-invert max-w-none">
+                <h3 className="text-sky-400 border-b border-slate-700 pb-2">Key Terminology</h3>
+                <dl className="mt-4 space-y-4">
+                    {glossary.map((item, i) => (
+                        <div key={i}>
+                            <dt className="font-bold text-teal-400">{item.term}</dt>
+                            <dd className="text-slate-400 pl-4">{item.definition}</dd>
+                        </div>
+                    ))}
+                </dl>
+            </div>
+            <div className="flex items-center justify-end gap-4 mt-6 pt-4 border-t border-slate-700">
+                <ResultsActionBar contentRef={contentRef} plainTextContent={plainTextContent} fileName={`${title}_glossary`} />
+            </div>
+        </div>
+    );
+};
+
 export const SummaryResults: React.FC<{
   summaryContent: GeneratedContent;
-  summaryType: 'paragraph' | 'bullets' | 'concept-map';
+  summaryType: string;
   title: string;
   onGenerateQuiz?: () => void;
   isGeneratingQuiz?: boolean;

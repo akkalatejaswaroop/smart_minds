@@ -33,6 +33,11 @@ export interface QuizQuestion {
   explanation: string;
 }
 
+export interface GlossaryTerm {
+    term: string;
+    definition: string;
+}
+
 export interface GeneratedContent {
     text?: string;
     summary?: string;
@@ -43,4 +48,5 @@ export interface GeneratedContent {
         quotes: string[];
         passages: string[];
     };
+    glossary?: GlossaryTerm[];
 }

@@ -18,9 +18,10 @@ export interface GenerateSummaryParams {
     language: string;
 }
 
-export interface BookInsightParams {
-  bookTitle: string;
-  insightType: 'summary' | 'concepts' | 'characters' | 'highlights' | 'quiz' | 'concept-map';
+export interface ContentInsightParams {
+  bookTitle?: string;
+  textContent?: string;
+  insightType: 'summary' | 'concepts' | 'characters' | 'highlights' | 'quiz' | 'concept-map' | 'tone-style' | 'glossary' | 'eli5' | 'discussion-questions';
   format: 'paragraph' | 'bullets';
   purpose: string;
   language: string;
@@ -189,6 +190,25 @@ const HIGHLIGHTS_SCHEMA = {
   required: ["highlights"]
 };
 
+const GLOSSARY_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    glossary: {
+      type: Type.ARRAY,
+      description: 'A list of key terms and their definitions.',
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          term: { type: Type.STRING, description: 'The key term.' },
+          definition: { type: Type.STRING, description: 'The definition of the term in context.' },
+        },
+        required: ['term', 'definition'],
+      },
+    },
+  },
+  required: ['glossary'],
+};
+
 
 const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'outputType'>) => 
   template.replace(/{concept}/g, params.concept)
@@ -310,8 +330,19 @@ export const generateBookSummary = async (params: GenerateSummaryParams): Promis
     }
 };
 
-export const generateBookInsights = async (params: BookInsightParams): Promise<GeneratedContent> => {
-    let prompt = `Based on your extensive knowledge of literature and digital resources, analyze the book "${params.bookTitle}". The user's goal is: "${params.purpose}". Respond in ${params.language}. `;
+export const generateContentInsights = async (params: ContentInsightParams): Promise<GeneratedContent> => {
+    let contextPrompt: string;
+    if (params.textContent) {
+        // Truncate content to avoid exceeding token limits. This is a simple approach.
+        const truncatedContent = params.textContent.length > 100000 ? params.textContent.substring(0, 100000) : params.textContent;
+        contextPrompt = `Based on the following document content:\n\n"""\n${truncatedContent}\n"""\n\n`;
+    } else if (params.bookTitle) {
+        contextPrompt = `Based on your extensive knowledge of literature and digital resources, analyze the book "${params.bookTitle}". `;
+    } else {
+        throw new Error('Either bookTitle or textContent must be provided.');
+    }
+    
+    let prompt = `${contextPrompt}The user's goal is: "${params.purpose}". Respond in ${params.language}. `;
     let schema: object | undefined = undefined;
     let isJsonOutput = false;
 
@@ -323,7 +354,7 @@ export const generateBookInsights = async (params: BookInsightParams): Promise<G
             prompt += `List and explain the key concepts or themes. The output should be in ${params.format} format. Format the response using simple Markdown.`;
             break;
         case 'characters':
-            prompt += `Provide a list of major characters with brief descriptions of their roles. Format the response as a Markdown list.`;
+            prompt += `Provide a list of major characters with brief descriptions of their roles. Format the response as a Markdown list. If the content is not a story with characters, state that.`;
             break;
         case 'highlights':
             prompt += `Extract key ideas, important quotes, and significant passages. Your response MUST be a valid JSON object matching the specified schema.`;
@@ -331,14 +362,28 @@ export const generateBookInsights = async (params: BookInsightParams): Promise<G
             isJsonOutput = true;
             break;
         case 'quiz':
-            prompt += `Generate a 3-question multiple-choice quiz about its plot, themes, or characters. For each question, provide 4 options, the correct answer, and an explanation. Your response MUST be a valid JSON object matching the specified schema.`;
+            prompt += `Generate a 3-question multiple-choice quiz based on the content. For each question, provide 4 options, the correct answer, and an explanation. Your response MUST be a valid JSON object matching the specified schema.`;
             schema = QUIZ_SCHEMA;
             isJsonOutput = true;
             break;
         case 'concept-map':
-            prompt += `Generate a concept map of its main themes, characters, and plot points. Provide a short summary and the Mermaid.js flowchart syntax. Your response MUST be a valid JSON object matching the specified schema.`;
+            prompt += `Generate a concept map of the main themes, characters, and plot points. Provide a short summary and the Mermaid.js flowchart syntax. Your response MUST be a valid JSON object matching the specified schema.`;
             schema = CONCEPT_MAP_SCHEMA;
             isJsonOutput = true;
+            break;
+        case 'tone-style':
+            prompt += `Analyze the tone (e.g., formal, informal, academic, persuasive, narrative) and writing style (e.g., descriptive, concise, verbose, metaphorical). Provide the analysis as a Markdown formatted text.`;
+            break;
+        case 'glossary':
+            prompt += `Identify and define key terminology or jargon found in the text. Your response MUST be a valid JSON object matching the specified schema.`;
+            schema = GLOSSARY_SCHEMA;
+            isJsonOutput = true;
+            break;
+        case 'eli5':
+            prompt += `Explain the main ideas and concepts of the text in a very simple and easy-to-understand way, as if you were explaining it to a 5-year-old. Format the response using simple Markdown.`;
+            break;
+        case 'discussion-questions':
+            prompt += `Generate a list of 5 thought-provoking discussion questions based on the content. These questions should be suitable for a study group or book club. Format the response as a numbered Markdown list.`;
             break;
     }
 
@@ -355,10 +400,16 @@ export const generateBookInsights = async (params: BookInsightParams): Promise<G
 
     const textResponse = response.text.trim();
     if (isJsonOutput) {
-        return JSON.parse(textResponse);
+        try {
+            return JSON.parse(textResponse);
+        } catch (e) {
+            console.error("Failed to parse JSON response:", textResponse);
+            throw new Error("The AI returned an invalid JSON response. Please try again.");
+        }
     }
     return { text: textResponse };
 };
+
 
 export const generateRecommendations = async (currentBook: Book, allBooks: Book[]): Promise<Book[]> => {
     const booklist = allBooks
