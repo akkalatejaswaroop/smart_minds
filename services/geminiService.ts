@@ -18,6 +18,14 @@ export interface GenerateSummaryParams {
     language: string;
 }
 
+export interface BookInsightParams {
+  bookTitle: string;
+  insightType: 'summary' | 'concepts' | 'characters' | 'highlights' | 'quiz' | 'concept-map';
+  format: 'paragraph' | 'bullets';
+  purpose: string;
+  language: string;
+}
+
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const model = 'gemini-2.5-flash';
@@ -153,6 +161,35 @@ const QUIZ_SCHEMA = {
   required: ["quiz"]
 };
 
+const HIGHLIGHTS_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    highlights: {
+      type: Type.OBJECT,
+      properties: {
+        keyIdeas: {
+          type: Type.ARRAY,
+          description: "A list of key ideas or themes from the book.",
+          items: { type: Type.STRING }
+        },
+        quotes: {
+          type: Type.ARRAY,
+          description: "A list of notable quotes from the book.",
+          items: { type: Type.STRING }
+        },
+        passages: {
+          type: Type.ARRAY,
+          description: "A list of significant passages or excerpts from the book.",
+          items: { type: Type.STRING }
+        },
+      },
+      required: ["keyIdeas", "quotes", "passages"]
+    }
+  },
+  required: ["highlights"]
+};
+
+
 const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'outputType'>) => 
   template.replace(/{concept}/g, params.concept)
           .replace(/{subject}/g, params.subject)
@@ -271,6 +308,56 @@ export const generateBookSummary = async (params: GenerateSummaryParams): Promis
         });
         return { text: response.text };
     }
+};
+
+export const generateBookInsights = async (params: BookInsightParams): Promise<GeneratedContent> => {
+    let prompt = `Based on your extensive knowledge of literature and digital resources, analyze the book "${params.bookTitle}". The user's goal is: "${params.purpose}". Respond in ${params.language}. `;
+    let schema: object | undefined = undefined;
+    let isJsonOutput = false;
+
+    switch (params.insightType) {
+        case 'summary':
+            prompt += `Generate a comprehensive summary in ${params.format} format. Format the response using simple Markdown.`;
+            break;
+        case 'concepts':
+            prompt += `List and explain the key concepts or themes. The output should be in ${params.format} format. Format the response using simple Markdown.`;
+            break;
+        case 'characters':
+            prompt += `Provide a list of major characters with brief descriptions of their roles. Format the response as a Markdown list.`;
+            break;
+        case 'highlights':
+            prompt += `Extract key ideas, important quotes, and significant passages. Your response MUST be a valid JSON object matching the specified schema.`;
+            schema = HIGHLIGHTS_SCHEMA;
+            isJsonOutput = true;
+            break;
+        case 'quiz':
+            prompt += `Generate a 3-question multiple-choice quiz about its plot, themes, or characters. For each question, provide 4 options, the correct answer, and an explanation. Your response MUST be a valid JSON object matching the specified schema.`;
+            schema = QUIZ_SCHEMA;
+            isJsonOutput = true;
+            break;
+        case 'concept-map':
+            prompt += `Generate a concept map of its main themes, characters, and plot points. Provide a short summary and the Mermaid.js flowchart syntax. Your response MUST be a valid JSON object matching the specified schema.`;
+            schema = CONCEPT_MAP_SCHEMA;
+            isJsonOutput = true;
+            break;
+    }
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        ...(isJsonOutput && {
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: schema,
+            },
+        }),
+    });
+
+    const textResponse = response.text.trim();
+    if (isJsonOutput) {
+        return JSON.parse(textResponse);
+    }
+    return { text: textResponse };
 };
 
 export const generateRecommendations = async (currentBook: Book, allBooks: Book[]): Promise<Book[]> => {

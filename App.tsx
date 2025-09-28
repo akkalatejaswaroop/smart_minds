@@ -3,8 +3,9 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { GeneratorView } from './GeneratorView';
 import { LibraryView } from './LibraryView';
+import { BookSummarizerView } from './BookSummarizerView';
 
-export type AppView = 'generator' | 'library';
+export type AppView = 'generator' | 'library' | 'book-summarizer';
 
 const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(window.innerWidth >= 768);
@@ -29,6 +30,7 @@ const App: React.FC = () => {
         <Header onMenuClick={() => setIsSidebarOpen(prev => !prev)} />
         {currentView === 'generator' && <GeneratorView />}
         {currentView === 'library' && <LibraryView />}
+        {currentView === 'book-summarizer' && <BookSummarizerView />}
       </main>
     </div>
   );

@@ -38,4 +38,9 @@ export interface GeneratedContent {
     summary?: string;
     mermaidCode?: string;
     quiz?: QuizQuestion[];
+    highlights?: {
+        keyIdeas: string[];
+        quotes: string[];
+        passages: string[];
+    };
 }

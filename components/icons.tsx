@@ -97,3 +97,21 @@ export const ClipboardCodeIcon = () => (
         <path d="m14 14 2 2-2 2" />
     </svg>
 );
+
+export const HighlighterIcon = ({ className = "w-5 h-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="m12.5 3.5-9 9a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0l9-9-7-7z" />
+        <path d="m18.5 2.5 4 4" />
+        <path d="M14.5 7.5 11 11" />
+    </svg>
+);
+
+export const FileTextIcon = ({ className = "w-5 h-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <line x1="10" y1="9" x2="8" y2="9" />
+    </svg>
+);

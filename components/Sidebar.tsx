@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Subject, Concept } from '../types';
-import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon } from './icons';
+import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon } from './icons';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import type { AppView } from '../App';
 
@@ -87,6 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                   <BookOpenIcon />
                   <span>Digital Library</span>
               </button>
+              <button onClick={() => onSetView('book-summarizer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'book-summarizer' ? 'bg-teal-600 text-white' : 'hover:bg-slate-800'}`}>
+                  <FileTextIcon />
+                  <span>Book Summarizer</span>
+              </button>
            </div>
         </div>
 
@@ -97,12 +101,19 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               <h3 className="text-sm font-semibold text-slate-400 mb-2">Generator Info</h3>
               <p className="text-xs text-slate-500">Use the controls in the main view to select a topic and generate educational content like explanations, presentations, and quizzes.</p>
             </>
-          ) : (
+          ) : null}
+          {currentView === 'library' ? (
             <>
               <h3 className="text-sm font-semibold text-slate-400 mb-2">Library Info</h3>
               <p className="text-xs text-slate-500">The Digital Library contains a collection of books and an AI-powered summarizer. Use the search bar in the main view to find books.</p>
             </>
-          )}
+          ) : null}
+          {currentView === 'book-summarizer' ? (
+            <>
+              <h3 className="text-sm font-semibold text-slate-400 mb-2">Book Summarizer Info</h3>
+              <p className="text-xs text-slate-500">Enter any book title to get AI-generated summaries, key concepts, character lists, quizzes, and more. This tool uses the model's broad knowledge to analyze books that are not in our digital library.</p>
+            </>
+          ) : null}
         </div>
 
       </div>
