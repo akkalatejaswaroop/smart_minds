@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Subject, Concept } from '../types';
-import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon, ScaleIcon, MapIcon, MessageSquareIcon, CodeIcon } from './icons';
+import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon, ScaleIcon, MapIcon, MessageSquareIcon, CodeIcon, DownloadIcon } from './icons';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import type { AppView } from '../App';
 
@@ -81,6 +81,21 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                   <span>Code Explainer</span>
               </button>
            </div>
+        </div>
+        
+        {/* Download App Section */}
+        <div className="p-4 border-b border-slate-700">
+           <h3 className="text-sm font-semibold text-slate-400 mb-2">Get The App</h3>
+           <a 
+              href="https://appsgeyser.io/19158917/Smart-Minds" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-emerald-600 text-white hover:bg-emerald-500"
+              aria-label="Download for Android"
+            >
+              <DownloadIcon />
+              <span>Download for Android</span>
+           </a>
         </div>
 
 
