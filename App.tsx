@@ -34,7 +34,7 @@ const App: React.FC = () => {
           />
       )}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <Header onMenuClick={() => setIsSidebarOpen(prev => !prev)} />
+        <Header onMenuClick={() => setIsSidebarOpen(prev => !prev)} isSidebarOpen={isSidebarOpen} />
         <Suspense fallback={
           <div className="flex-1 flex flex-col items-center justify-center">
             <LoadingSpinner className="h-8 w-8" />
