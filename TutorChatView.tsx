@@ -3,6 +3,8 @@ import { GoogleGenAI, Chat } from "@google/genai";
 import type { ChatMessage } from './types';
 import { LoadingSpinner } from './components/SummarizerComponents';
 import { renderSimpleMarkdown } from './utils/markdown';
+import { useSpeechRecognition } from './hooks/useSpeechRecognition';
+import { MicrophoneIcon } from './components/icons';
 
 const TutorChatView: React.FC = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -11,6 +13,19 @@ const TutorChatView: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const chat = useRef<Chat | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    
+    const {
+        transcript,
+        isListening,
+        startListening,
+        stopListening,
+    } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript) {
+            setInput(transcript);
+        }
+    }, [transcript]);
 
     useEffect(() => {
         try {
@@ -71,6 +86,15 @@ const TutorChatView: React.FC = () => {
         }
     };
 
+    const handleMicClick = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            setInput(''); // Clear input before listening
+            startListening();
+        }
+    };
+
     return (
         <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-hidden">
             <h1 className="text-3xl font-bold text-white mb-2">AI Tutor Chat</h1>
@@ -104,15 +128,25 @@ const TutorChatView: React.FC = () => {
                 </div>
                 <div className="p-4 border-t border-slate-700 bg-slate-800">
                     <div className="flex gap-2">
-                         <input
-                            type="text"
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Ask me anything about your studies..."
-                            className="flex-grow bg-slate-700 border border-slate-600 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                            disabled={isLoading}
-                        />
+                        <div className="relative flex-grow">
+                             <input
+                                type="text"
+                                value={input}
+                                onChange={e => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Ask me anything or use the mic..."
+                                className="w-full bg-slate-700 border border-slate-600 rounded-md px-4 py-2 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                disabled={isLoading}
+                            />
+                            <button
+                                onClick={handleMicClick}
+                                className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-white ${isListening ? 'text-indigo-400 animate-pulse' : ''}`}
+                                aria-label="Use microphone to dictate"
+                                disabled={isLoading}
+                            >
+                                <MicrophoneIcon />
+                            </button>
+                        </div>
                         <button
                             onClick={handleSendMessage}
                             disabled={isLoading || !input.trim()}
