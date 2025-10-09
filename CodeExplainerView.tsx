@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { analyzeCode } from './services/geminiService';
 import { LoadingSpinner } from './components/SummarizerComponents';
 import { renderSimpleMarkdown } from './utils/markdown';
@@ -64,6 +64,54 @@ const DebugDisplay: React.FC<{ data: CodeDebugReport }> = ({ data }) => (
     </div>
 );
 
+const CodeInputWithLineNumbers: React.FC<{
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    placeholder: string;
+    disabled: boolean;
+}> = ({ value, onChange, placeholder, disabled }) => {
+    const lineNumbersRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Calculate line numbers based on newlines
+    const lineCount = value.split('\n').length;
+    
+    // Synchronize scrolling of the line numbers with the textarea
+    const handleScroll = () => {
+        if (lineNumbersRef.current && textareaRef.current) {
+            lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+        }
+    };
+
+    return (
+        <div 
+            className="flex-1 flex bg-slate-900 border border-slate-700 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500"
+            style={{ minHeight: '300px' }}
+        >
+            <div
+                ref={lineNumbersRef}
+                className="py-4 pl-4 pr-3 text-right text-slate-500 bg-slate-900 select-none overflow-y-hidden font-mono text-sm leading-5"
+                aria-hidden="true"
+            >
+                {Array.from({ length: lineCount }, (_, i) => (
+                    <div key={i}>{i + 1}</div>
+                ))}
+            </div>
+            <textarea
+                ref={textareaRef}
+                value={value}
+                onChange={onChange}
+                onScroll={handleScroll}
+                placeholder={placeholder}
+                className="flex-1 bg-transparent py-4 pl-2 pr-4 text-slate-300 focus:outline-none resize-none w-full font-mono text-sm leading-5 whitespace-pre overflow-x-auto"
+                disabled={disabled}
+                aria-label="Code input"
+                spellCheck="false"
+            />
+        </div>
+    );
+};
+
 
 const CodeExplainerView: React.FC = () => {
     const [code, setCode] = useState('');
@@ -117,14 +165,11 @@ const CodeExplainerView: React.FC = () => {
                         </button>
                     </div>
 
-                    <textarea
+                    <CodeInputWithLineNumbers
                         value={code}
                         onChange={e => setCode(e.target.value)}
                         placeholder={`// Paste your code here...\n\nfunction example(arr) {\n  return arr.sort();\n}`}
-                        className="flex-1 bg-slate-900 border border-slate-700 rounded-md p-4 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none"
-                        style={{ minHeight: '300px' }}
                         disabled={isLoading}
-                        aria-label="Code input"
                     />
                     
                     <button
