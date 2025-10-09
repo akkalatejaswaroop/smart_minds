@@ -52,11 +52,6 @@ export interface GeneratedContent {
 }
 
 // Types for new AI Tools
-export interface DebateArguments {
-  pro: string[];
-  con: string[];
-}
-
 export interface LearningPathModule {
   moduleTitle: string;
   description: string;
@@ -66,4 +61,10 @@ export interface LearningPathModule {
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
+}
+
+// FIX: Add DebateArguments interface to be used in DebateGeneratorView.
+export interface DebateArguments {
+  pro: string[];
+  con: string[];
 }

@@ -14,27 +14,11 @@ import { renderSimpleMarkdown } from '../utils/markdown';
 
 interface ContentDisplayProps {
   outputType: OutputType;
-  setOutputType: (type: OutputType) => void;
-  purpose: string;
-  setPurpose: (purpose: string) => void;
-  language: string;
-  setLanguage: (lang: string) => void;
-  onGenerate: () => void;
   generatedContent: GeneratedContent | null;
   isLoading: boolean;
   error: string | null;
   conceptName?: string;
 }
-
-const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Mandarin', 'Telugu', 'Japanese', 'Korean', 'Russian'];
-const PURPOSES = [
-    'preparing for a college exam',
-    'understanding a new topic',
-    'reviewing for a quiz',
-    'getting a quick summary',
-    'teaching a class',
-    'creating study notes'
-];
 
 // --- Reusable Quiz Component ---
 const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
@@ -142,12 +126,6 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
 
 export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   outputType,
-  setOutputType,
-  purpose,
-  setPurpose,
-  language,
-  setLanguage,
-  onGenerate,
   generatedContent,
   isLoading,
   error,
@@ -163,13 +141,12 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
     ? generatedContent?.summary || ''
     : generatedContent?.text || '';
 
-  const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(textToCopy, language);
+  const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(textToCopy, 'English'); // Language can be passed if needed
 
   useEffect(() => {
     const renderMermaid = async () => {
       if (outputType === 'concept-map' && generatedContent?.mermaidCode && mermaidRef.current) {
         try {
-          // Clear previous map to prevent duplicates
           mermaidRef.current.innerHTML = '';
           const { svg } = await window.mermaid.render('mermaid-graph', generatedContent.mermaidCode);
           setMermaidSvg(svg);
@@ -221,66 +198,18 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-y-auto">
-      {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center bg-slate-800 rounded-lg p-1 flex-wrap">
-          {(['explanation', 'presentation', 'examples', 'summary', 'quiz', 'concept-map'] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() => setOutputType(type)}
-              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                outputType === type ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700'
-              }`}
-              aria-pressed={outputType === type}
-            >
-              {type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </button>
-          ))}
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-4">
-          {outputType !== 'concept-map' && outputType !== 'quiz' && (
-            <select
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            >
-              {PURPOSES.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-            </select>
-          )}
-          <select 
-            value={language} 
-            onChange={e => setLanguage(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
-            {LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
-          </select>
-
-          <button
-            onClick={onGenerate}
-            disabled={isLoading}
-            className="bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center"
-          >
-            {isLoading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Generating...
-              </>
-            ) : (
-              'Generate'
-            )}
-          </button>
-        </div>
-      </div>
-
+    <div className="flex-1 flex flex-col">
       {/* Output */}
-      <div className="flex-1 bg-slate-800 rounded-lg p-6 overflow-y-auto relative border border-slate-700">
+      <div className="flex-1 bg-slate-800 rounded-lg p-6 overflow-y-auto relative border border-slate-700 min-h-[400px]">
         {isLoading && !generatedContent && <div className="text-center text-slate-400">Generating... Please wait.</div>}
         {error && <div className="text-red-400 whitespace-pre-wrap">{error}</div>}
+        
+        {!isLoading && !generatedContent && !error && (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                <h3 className="text-lg font-semibold">Ready to learn?</h3>
+                <p className="text-sm text-center">Enter a concept and choose your options above to get started.</p>
+            </div>
+        )}
         
         {generatedContent && !isLoading && (
           <>

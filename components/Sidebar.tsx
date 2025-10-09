@@ -62,10 +62,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         <div className="p-4 border-b border-slate-700">
            <h3 className="text-sm font-semibold text-slate-400 mb-2">AI Tools</h3>
            <div className="space-y-2">
-              <button onClick={() => handleSetView('debate-generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'debate-generator' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
-                  <ScaleIcon />
-                  <span>Debate Generator</span>
-              </button>
               <button onClick={() => handleSetView('learning-path')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'learning-path' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
                   <MapIcon />
                   <span>Learning Path Creator</span>
@@ -107,9 +103,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           )}
           {currentView === 'book-summarizer' && (
               <p className="text-xs text-slate-500">Analyze any book by its title or upload a document (PDF, DOCX) to get summaries, concept maps, quizzes, and more.</p>
-          )}
-          {currentView === 'debate-generator' && (
-              <p className="text-xs text-slate-500">Enter a topic to generate balanced arguments for both sides of a debate. A great tool for critical thinking.</p>
           )}
           {currentView === 'learning-path' && (
               <p className="text-xs text-slate-500">Define a learning goal, and the AI will create a customized, step-by-step learning path to guide your studies.</p>

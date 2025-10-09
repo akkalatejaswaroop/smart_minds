@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import type { OutputType, GeneratedContent, Book, DebateArguments, LearningPathModule } from '../types';
+// FIX: Import DebateArguments type to support the new debate generation feature.
+import type { OutputType, GeneratedContent, Book, LearningPathModule, DebateArguments } from '../types';
 
 export interface GenerateContentParams {
   outputType: OutputType;
@@ -210,23 +211,6 @@ const GLOSSARY_SCHEMA = {
     },
   },
   required: ['glossary'],
-};
-
-const DEBATE_SCHEMA = {
-    type: Type.OBJECT,
-    properties: {
-        pro: {
-            type: Type.ARRAY,
-            description: "An array of strings, with each string being a distinct argument for the topic.",
-            items: { type: Type.STRING }
-        },
-        con: {
-            type: Type.ARRAY,
-            description: "An array of strings, with each string being a distinct argument against the topic.",
-            items: { type: Type.STRING }
-        },
-    },
-    required: ["pro", "con"]
 };
 
 const LEARNING_PATH_SCHEMA = {
@@ -502,20 +486,6 @@ export const generateRecommendations = async (currentBook: Book, allBooks: Book[
     }
 };
 
-export const generateDebateArguments = async (topic: string): Promise<DebateArguments> => {
-    const prompt = `Generate a debate on the topic '${topic}'. Provide a balanced set of three compelling arguments for the 'pro' side and three for the 'con' side. Respond ONLY with a valid JSON object with two keys: "pro" and "con", where each key contains an array of strings, with each string being a distinct argument.`;
-    const response = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: DEBATE_SCHEMA,
-        },
-    });
-    const jsonString = response.text.trim();
-    return JSON.parse(jsonString);
-};
-
 export const generateLearningPath = async (goal: string): Promise<LearningPathModule[]> => {
     const prompt = `Create a detailed, step-by-step learning path for a beginner wanting to achieve the goal: '${goal}'. The path should consist of several modules. For each module, provide a title, a concise description of what to learn, and a list of key topics to cover. Respond ONLY with a valid JSON object containing a 'path' key, which is an array of module objects. Each module object should have 'moduleTitle', 'description', and 'keyTopics' (an array of strings).`;
     const response = await ai.models.generateContent({
@@ -528,6 +498,38 @@ export const generateLearningPath = async (goal: string): Promise<LearningPathMo
     });
     const { path } = JSON.parse(response.text.trim());
     return path;
+};
+
+// FIX: Add generateDebateArguments function and its associated schema.
+const DEBATE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    pro: {
+      type: Type.ARRAY,
+      description: "A list of 3 compelling arguments for the topic.",
+      items: { type: Type.STRING }
+    },
+    con: {
+      type: Type.ARRAY,
+      description: "A list of 3 compelling arguments against the topic.",
+      items: { type: Type.STRING }
+    }
+  },
+  required: ["pro", "con"]
+};
+
+export const generateDebateArguments = async (topic: string): Promise<DebateArguments> => {
+    const prompt = `Generate a balanced set of 3 compelling arguments for (pro) and 3 arguments against (con) the following debate topic: '${topic}'. Respond ONLY with a valid JSON object. Do not include markdown formatting.`;
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: DEBATE_SCHEMA,
+        },
+    });
+    const jsonString = response.text.trim();
+    return JSON.parse(jsonString);
 };
 
 export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Promise<string> => {
