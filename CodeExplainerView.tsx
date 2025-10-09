@@ -3,11 +3,72 @@ import { analyzeCode } from './services/geminiService';
 import { LoadingSpinner } from './components/SummarizerComponents';
 import { renderSimpleMarkdown } from './utils/markdown';
 import { BugIcon, CodeIcon, HighlighterIcon } from './components/icons';
+import type { CodeAnalysisResult, CodeExplanation, CodeDebugReport } from './types';
+
+const ExplanationDisplay: React.FC<{ data: CodeExplanation }> = ({ data }) => (
+    <div className="prose prose-invert max-w-none space-y-6">
+        <div>
+            <h3 className="text-purple-400 border-b border-slate-700 pb-2">Summary</h3>
+            <p className="mt-2 text-slate-300">{data.summary}</p>
+        </div>
+        <div>
+            <h3 className="text-purple-400 border-b border-slate-700 pb-2">Line-by-Line Explanation</h3>
+            <dl className="mt-4 space-y-4">
+                {data.lineByLineExplanation.map((item, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                        <dt className="font-mono text-indigo-400 flex-shrink-0 sm:w-24 sm:text-right">{item.lines}</dt>
+                        <dd className="text-slate-400 border-l-2 border-slate-700 pl-4 sm:border-l-0 sm:pl-0">{item.explanation}</dd>
+                    </div>
+                ))}
+            </dl>
+        </div>
+        <div>
+            <h3 className="text-purple-400 border-b border-slate-700 pb-2">Key Concepts</h3>
+            <ul className="mt-2 list-disc list-inside text-slate-300">
+                {data.keyConcepts.map((concept, index) => (
+                    <li key={index}>{concept}</li>
+                ))}
+            </ul>
+        </div>
+    </div>
+);
+
+const DebugDisplay: React.FC<{ data: CodeDebugReport }> = ({ data }) => (
+    <div className="prose prose-invert max-w-none space-y-6">
+        <div>
+            <h3 className="text-purple-400 border-b border-slate-700 pb-2">Analysis Summary</h3>
+            <p className="mt-2 text-slate-300">{data.analysisSummary}</p>
+        </div>
+        
+        {data.bugs.length > 0 && (
+            <div>
+                <h3 className="text-purple-400 border-b border-slate-700 pb-2">Identified Issues</h3>
+                <div className="mt-4 space-y-4">
+                    {data.bugs.map((bug, index) => (
+                        <div key={index} className="bg-slate-900/50 p-4 rounded-md border border-slate-600">
+                            <p className="font-semibold text-red-400">Issue on {bug.line}: <span className="text-slate-300 font-normal">{bug.issue}</span></p>
+                            <p className="font-semibold text-green-400 mt-2">Suggestion: <span className="text-slate-300 font-normal">{bug.suggestion}</span></p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+
+        <div>
+            <h3 className="text-purple-400 border-b border-slate-700 pb-2">Corrected Code</h3>
+            <div 
+                className="prose prose-invert max-w-none prose-pre:bg-slate-900 prose-pre:p-4 prose-pre:rounded-md prose-code:text-pink-400"
+                dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(`\`\`\`\n${data.correctedCode}\n\`\`\``) }} 
+            />
+        </div>
+    </div>
+);
+
 
 const CodeExplainerView: React.FC = () => {
     const [code, setCode] = useState('');
     const [action, setAction] = useState<'explain' | 'debug'>('explain');
-    const [result, setResult] = useState<string | null>(null);
+    const [result, setResult] = useState<CodeAnalysisResult | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -94,10 +155,10 @@ const CodeExplainerView: React.FC = () => {
                             </div>
                         )}
                         {result && (
-                            <div
-                                className="prose prose-invert max-w-none prose-pre:bg-slate-900 prose-pre:p-4 prose-pre:rounded-md prose-code:text-pink-400"
-                                dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(result) }}
-                            />
+                            <>
+                                {action === 'explain' && 'summary' in result && <ExplanationDisplay data={result as CodeExplanation} />}
+                                {action === 'debug' && 'analysisSummary' in result && <DebugDisplay data={result as CodeDebugReport} />}
+                            </>
                         )}
                     </div>
                 </div>

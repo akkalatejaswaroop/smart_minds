@@ -63,6 +63,28 @@ export interface ChatMessage {
   text: string;
 }
 
+export interface CodeExplanation {
+  summary: string;
+  lineByLineExplanation: {
+    lines: string;
+    explanation: string;
+  }[];
+  keyConcepts: string[];
+}
+
+export interface CodeDebugReport {
+  analysisSummary: string;
+  bugs: {
+    line: string;
+    issue: string;
+    suggestion: string;
+  }[];
+  correctedCode: string;
+}
+
+export type CodeAnalysisResult = CodeExplanation | CodeDebugReport;
+
+
 // FIX: Add DebateArguments interface to be used in DebateGeneratorView.
 export interface DebateArguments {
   pro: string[];

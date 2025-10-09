@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 // FIX: Import DebateArguments type to support the new debate generation feature.
-import type { OutputType, GeneratedContent, Book, LearningPathModule, DebateArguments } from '../types';
+import type { OutputType, GeneratedContent, Book, LearningPathModule, DebateArguments, CodeAnalysisResult } from '../types';
 
 export interface GenerateContentParams {
   outputType: OutputType;
@@ -235,6 +235,62 @@ const LEARNING_PATH_SCHEMA = {
         }
     },
     required: ["path"]
+};
+
+const CODE_EXPLANATION_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    summary: {
+      type: Type.STRING,
+      description: "A high-level summary of the code's purpose and functionality."
+    },
+    lineByLineExplanation: {
+      type: Type.ARRAY,
+      description: "A detailed, line-by-line or block-by-block explanation of the code.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          lines: { type: Type.STRING, description: "The line range or specific line being explained (e.g., 'Lines 1-3', 'Line 5')." },
+          explanation: { type: Type.STRING, description: "The detailed explanation for that specific line or block of code." }
+        },
+        required: ["lines", "explanation"]
+      }
+    },
+    keyConcepts: {
+      type: Type.ARRAY,
+      description: "A list of key programming concepts, algorithms, or patterns used in the code.",
+      items: { type: Type.STRING }
+    }
+  },
+  required: ["summary", "lineByLineExplanation", "keyConcepts"]
+};
+
+const CODE_DEBUG_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    analysisSummary: {
+      type: Type.STRING,
+      description: "A high-level summary of the findings (e.g., 'No bugs found, but optimizations are possible', 'One critical bug identified')."
+    },
+    bugs: {
+      type: Type.ARRAY,
+      description: "A list of identified bugs or potential issues.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          line: { type: Type.STRING, description: "The line number or range where the bug is located." },
+          issue: { type: Type.STRING, description: "A clear description of the bug or issue." },
+          suggestion: { type: Type.STRING, description: "A suggested fix or improvement." }
+        },
+        required: ["line", "issue", "suggestion"]
+      }
+    },
+    correctedCode: {
+      type: Type.STRING,
+      description: "The full code snippet with all identified issues corrected. If no bugs are found, this can be the original code or an optimized version."
+    }
+  },
+  required: ["analysisSummary", "bugs", "correctedCode"]
 };
 
 
@@ -532,17 +588,46 @@ export const generateDebateArguments = async (topic: string): Promise<DebateArgu
     return JSON.parse(jsonString);
 };
 
-export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Promise<string> => {
-    const actionPrompt = action === 'explain'
-        ? "You are an expert code explainer. Analyze the following code snippet and provide a clear, line-by-line explanation of what it does. Also, provide a high-level summary of its purpose. Format the response using Markdown."
-        : "You are an expert code debugger. Analyze the following code snippet for potential bugs, errors, or improvements. If you find any issues, explain what they are and suggest a corrected version of the code. If the code looks correct, state that and suggest potential optimizations. Format the response using Markdown.";
+export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Promise<CodeAnalysisResult> => {
+    let prompt: string;
+    let schema: object;
 
-    const prompt = `${actionPrompt}\n\nHere is the code:\n\`\`\`\n${code}\n\`\`\``;
+    if (action === 'explain') {
+        prompt = `You are an expert code explainer. Analyze the following code snippet and provide a structured explanation.
+        - Start with a high-level summary.
+        - Provide a detailed line-by-line or block-by-block breakdown.
+        - Identify key programming concepts used.
+        Respond ONLY with a valid JSON object matching the specified schema.
+
+        Code:
+        \`\`\`
+        ${code}
+        \`\`\``;
+        schema = CODE_EXPLANATION_SCHEMA;
+    } else { // action === 'debug'
+        prompt = `You are an expert code debugger. Analyze the following code snippet for bugs, errors, and improvements.
+        - Provide a summary of your findings.
+        - List each identified bug with its location and a suggested fix.
+        - Provide the fully corrected code.
+        If no bugs are found, state that and suggest potential optimizations.
+        Respond ONLY with a valid JSON object matching the specified schema.
+
+        Code:
+        \`\`\`
+        ${code}
+        \`\`\``;
+        schema = CODE_DEBUG_SCHEMA;
+    }
     
     const response = await ai.models.generateContent({
         model,
         contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: schema,
+        },
     });
     
-    return response.text;
+    const jsonString = response.text.trim();
+    return JSON.parse(jsonString);
 };
