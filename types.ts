@@ -51,11 +51,18 @@ export interface GeneratedContent {
     glossary?: GlossaryTerm[];
 }
 
+export interface Resource {
+  title: string;
+  url: string;
+  type: string;
+}
+
 // Types for new AI Tools
 export interface LearningPathModule {
   moduleTitle: string;
   description: string;
   keyTopics: string[];
+  resources: Resource[];
 }
 
 export interface ChatMessage {

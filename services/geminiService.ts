@@ -9,6 +9,7 @@ export interface GenerateContentParams {
   purpose: string;
   language: string;
   complexity: string;
+  context?: string;
 }
 
 export interface GenerateSummaryParams {
@@ -228,9 +229,22 @@ const LEARNING_PATH_SCHEMA = {
                         type: Type.ARRAY, 
                         description: "A list of key topics to cover in this module.",
                         items: { type: Type.STRING } 
+                    },
+                    resources: {
+                        type: Type.ARRAY,
+                        description: "A list of 2-3 free online learning resources for this module.",
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                title: { type: Type.STRING, description: "The title of the resource." },
+                                url: { type: Type.STRING, description: "The direct URL to the resource." },
+                                type: { type: Type.STRING, description: "The type of resource (e.g., 'Video', 'Article', 'Interactive Tutorial', 'Documentation')." }
+                            },
+                            required: ["title", "url", "type"]
+                        }
                     }
                 },
-                required: ["moduleTitle", "description", "keyTopics"]
+                required: ["moduleTitle", "description", "keyTopics", "resources"]
             }
         }
     },
@@ -294,7 +308,7 @@ const CODE_DEBUG_SCHEMA = {
 };
 
 
-const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'outputType'>) => 
+const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'outputType' | 'context'>) => 
   template.replace(/{concept}/g, params.concept)
           .replace(/{subject}/g, params.subject)
           .replace(/{purpose}/g, params.purpose)
@@ -308,13 +322,28 @@ export const generateTextStream = async ({
   concept,
   purpose,
   language,
-  complexity
+  complexity,
+  context
 }: GenerateContentParams): Promise<AsyncGenerator<GenerateContentResponse>> => {
-  const prompt = fillTemplate(PROMPT_TEMPLATES[outputType as keyof typeof PROMPT_TEMPLATES], { subject, concept, purpose, language, complexity });
+  const userRequest = fillTemplate(PROMPT_TEMPLATES[outputType as keyof typeof PROMPT_TEMPLATES], { subject, concept, purpose, language, complexity });
+  
+  let finalPrompt = userRequest;
+  if (context) {
+    finalPrompt = `You will be provided with a document as context. Your task is to use this context to answer the user's request about a specific concept.
+
+--- DOCUMENT CONTEXT ---
+${context}
+------------------------
+
+--- USER REQUEST ---
+${userRequest}
+
+Please ensure your response is based primarily on the information given in the document context.`;
+  }
   
   const stream = await ai.models.generateContentStream({
       model,
-      contents: prompt,
+      contents: finalPrompt,
   });
 
   return stream;
@@ -325,12 +354,28 @@ export const generateConceptMap = async ({
   concept,
   purpose,
   language,
-  complexity
+  complexity,
+  context
 }: GenerateContentParams): Promise<GeneratedContent> => {
-  const prompt = fillTemplate(CONCEPT_MAP_PROMPT, { subject, concept, purpose, language, complexity });
+  const userRequest = fillTemplate(CONCEPT_MAP_PROMPT, { subject, concept, purpose, language, complexity });
+
+  let finalPrompt = userRequest;
+  if (context) {
+    finalPrompt = `You will be provided with a document as context. Your task is to use this context to answer the user's request about a specific concept.
+
+--- DOCUMENT CONTEXT ---
+${context}
+------------------------
+
+--- USER REQUEST ---
+${userRequest}
+
+Please ensure your response is based primarily on the information given in the document context and strictly follows the requested JSON format.`;
+  }
+  
   const response = await ai.models.generateContent({
       model,
-      contents: prompt,
+      contents: finalPrompt,
       config: {
           responseMimeType: 'application/json',
           responseSchema: CONCEPT_MAP_SCHEMA,
@@ -345,12 +390,28 @@ export const generateQuiz = async ({
   concept,
   purpose,
   language,
-  complexity
+  complexity,
+  context
 }: GenerateContentParams): Promise<GeneratedContent> => {
-  const prompt = fillTemplate(QUIZ_PROMPT, { subject, concept, purpose, language, complexity });
+  const userRequest = fillTemplate(QUIZ_PROMPT, { subject, concept, purpose, language, complexity });
+  
+  let finalPrompt = userRequest;
+  if (context) {
+      finalPrompt = `You will be provided with a document as context. Your task is to use this context to answer the user's request about a specific concept.
+
+--- DOCUMENT CONTEXT ---
+${context}
+------------------------
+
+--- USER REQUEST ---
+${userRequest}
+
+Please ensure your response is based primarily on the information given in the document context and strictly follows the requested JSON format.`;
+  }
+
   const response = await ai.models.generateContent({
       model,
-      contents: prompt,
+      contents: finalPrompt,
       config: {
           responseMimeType: 'application/json',
           responseSchema: QUIZ_SCHEMA,
@@ -543,7 +604,7 @@ export const generateRecommendations = async (currentBook: Book, allBooks: Book[
 };
 
 export const generateLearningPath = async (goal: string): Promise<LearningPathModule[]> => {
-    const prompt = `Create a detailed, step-by-step learning path for a beginner wanting to achieve the goal: '${goal}'. The path should consist of several modules. For each module, provide a title, a concise description of what to learn, and a list of key topics to cover. Respond ONLY with a valid JSON object containing a 'path' key, which is an array of module objects. Each module object should have 'moduleTitle', 'description', and 'keyTopics' (an array of strings).`;
+    const prompt = `Create a detailed, step-by-step learning path for a beginner wanting to achieve the goal: '${goal}'. The path should consist of several modules. For each module, provide a title, a concise description of what to learn, a list of key topics to cover, and a list of 2-3 high-quality, free online learning resources (like YouTube videos, articles, interactive tutorials, or official documentation) that would help a user learn the topics in that module. For each resource, provide a title, a valid URL, and its type. Respond ONLY with a valid JSON object containing a 'path' key, which is an array of module objects.`;
     const response = await ai.models.generateContent({
         model,
         contents: prompt,
