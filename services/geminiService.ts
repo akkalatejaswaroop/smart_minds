@@ -7,6 +7,7 @@ export interface GenerateContentParams {
   concept: string;
   purpose: string;
   language: string;
+  complexity: string;
 }
 
 export interface GenerateSummaryParams {
@@ -35,14 +36,14 @@ const PROMPT_TEMPLATES = {
   explanation: `
 Generate a concise explanation for the concept '{concept}' within the subject '{subject}'. 
 The target audience is a student '{purpose}'.
-The explanation should be clear, easy to understand, and focused, similar in length and detail to a '5-mark' answer in an exam. Avoid unnecessary jargon or overly deep dives.
+The explanation should be clear, easy to understand, tailored for a '{complexity}' level of understanding, and focused, similar in length and detail to a '5-mark' answer in an exam. Avoid unnecessary jargon or overly deep dives.
 Respond in {language}.
 
 Format the response using simple Markdown. Use a main heading for the concept, followed by bullet points or short paragraphs for the key points.
 `,
   presentation: `
 Generate a professional presentation script for the concept '{concept}' from '{subject}'.
-The script should be structured slide-by-slide, with clear headings and speaker notes.
+The script should be structured slide-by-slide, with clear headings and speaker notes, tailored to a '{complexity}' level of understanding.
 Respond in {language}.
 
 Use the following Markdown format:
@@ -69,6 +70,7 @@ Use the following Markdown format:
 `,
   examples: `
 Provide two distinct and well-explained examples for the concept '{concept}' ({subject}).
+The examples should be suitable for a '{complexity}' level of understanding.
 Start with a brief introduction about why examples are crucial for mastering this topic.
 Respond in {language}.
 
@@ -92,7 +94,8 @@ Use the following Markdown format:
 `,
   summary: `
 Generate a concise, easy-to-digest summary for the concept '{concept}' within the subject '{subject}'.
-The target audience is a student '{purpose}'. The tone should be clear and direct.
+The target audience is a student '{purpose}'. The summary's complexity should be '{complexity}'.
+The tone should be clear and direct.
 Respond in {language}.
 
 Format the response as a well-structured bulleted list using Markdown.
@@ -102,7 +105,7 @@ Format the response as a well-structured bulleted list using Markdown.
 `
 };
 
-const CONCEPT_MAP_PROMPT = `Generate a concept map for '{concept}' ({subject}).
+const CONCEPT_MAP_PROMPT = `Generate a concept map for '{concept}' ({subject}'). The summary and map should be tailored to a '{complexity}' level of understanding.
 1.  **Summary:** Provide a short, concise summary of the concept (under 100 words).
 2.  **Mermaid Code:** Provide the concept map in Mermaid.js flowchart syntax (using \`graph TD;\`). The map must visually explain the key ideas and their relationships.
     - IMPORTANT: Enclose all node text in double quotes to prevent syntax errors with special characters (e.g., A["Node Text with (parentheses)"]).
@@ -124,7 +127,7 @@ const CONCEPT_MAP_SCHEMA = {
   required: ["summary", "mermaidCode"],
 };
 
-const QUIZ_PROMPT = `Generate an interactive multiple-choice quiz with 3 questions for the concept '{concept}' ({subject}). For each question, provide 4 options, indicate the correct answer, and give a brief explanation for why the answer is correct. Respond ONLY with a valid JSON object containing a single key "quiz", which holds an array of question objects. Do not include markdown formatting like \`\`\`json. Respond in {language}.`;
+const QUIZ_PROMPT = `Generate an interactive multiple-choice quiz with 3 questions for the concept '{concept}' ({subject}). The difficulty of the questions should be at a '{complexity}' level. For each question, provide 4 options, indicate the correct answer, and give a brief explanation for why the answer is correct. Respond ONLY with a valid JSON object containing a single key "quiz", which holds an array of question objects. Do not include markdown formatting like \`\`\`json. Respond in {language}.`;
 
 const QUIZ_SCHEMA = {
   type: Type.OBJECT,
@@ -255,7 +258,8 @@ const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'out
   template.replace(/{concept}/g, params.concept)
           .replace(/{subject}/g, params.subject)
           .replace(/{purpose}/g, params.purpose)
-          .replace(/{language}/g, params.language);
+          .replace(/{language}/g, params.language)
+          .replace(/{complexity}/g, params.complexity);
 
 
 export const generateTextStream = async ({
@@ -263,9 +267,10 @@ export const generateTextStream = async ({
   subject,
   concept,
   purpose,
-  language
+  language,
+  complexity
 }: GenerateContentParams): Promise<AsyncGenerator<GenerateContentResponse>> => {
-  const prompt = fillTemplate(PROMPT_TEMPLATES[outputType as keyof typeof PROMPT_TEMPLATES], { subject, concept, purpose, language });
+  const prompt = fillTemplate(PROMPT_TEMPLATES[outputType as keyof typeof PROMPT_TEMPLATES], { subject, concept, purpose, language, complexity });
   
   const stream = await ai.models.generateContentStream({
       model,
@@ -279,9 +284,10 @@ export const generateConceptMap = async ({
   subject,
   concept,
   purpose,
-  language
+  language,
+  complexity
 }: GenerateContentParams): Promise<GeneratedContent> => {
-  const prompt = fillTemplate(CONCEPT_MAP_PROMPT, { subject, concept, purpose, language });
+  const prompt = fillTemplate(CONCEPT_MAP_PROMPT, { subject, concept, purpose, language, complexity });
   const response = await ai.models.generateContent({
       model,
       contents: prompt,
@@ -298,9 +304,10 @@ export const generateQuiz = async ({
   subject,
   concept,
   purpose,
-  language
+  language,
+  complexity
 }: GenerateContentParams): Promise<GeneratedContent> => {
-  const prompt = fillTemplate(QUIZ_PROMPT, { subject, concept, purpose, language });
+  const prompt = fillTemplate(QUIZ_PROMPT, { subject, concept, purpose, language, complexity });
   const response = await ai.models.generateContent({
       model,
       contents: prompt,

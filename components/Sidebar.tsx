@@ -1,7 +1,5 @@
-import React, { useEffect } from 'react';
-import type { Subject, Concept } from '../types';
+import React from 'react';
 import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon, ScaleIcon, MapIcon, MessageSquareIcon, CodeIcon, DownloadIcon } from './icons';
-import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import type { AppView } from '../App';
 
 interface SidebarProps {
@@ -102,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         {/* Contextual Controls */}
         <div className="flex-1 p-4 overflow-y-auto">
           {currentView === 'generator' && (
-              <p className="text-xs text-slate-500">Generate educational content like explanations, presentations, and quizzes for academic or competitive exam topics.</p>
+              <p className="text-xs text-slate-500">Enter any concept to generate educational content like explanations, presentations, quizzes, and concept maps.</p>
           )}
           {currentView === 'library' && (
               <p className="text-xs text-slate-500">Explore the Digital Library, read books, and use the AI summarizer to understand key concepts quickly.</p>
