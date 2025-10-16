@@ -3,7 +3,7 @@ import { generateLearningPath } from './services/geminiService';
 import type { LearningPathModule } from './types';
 import { LoadingSpinner } from './components/SummarizerComponents';
 import { MapIcon, PlayCircleIcon, FileTextIcon, BookOpenIcon, CodeIcon, ScaleIcon, ExternalLinkIcon, DownloadIcon } from './components/icons';
-import { exportAsPdf } from '../utils/export';
+import { exportAsPdf } from './utils/export';
 
 const getResourceIcon = (type: string) => {
     const lowerType = type.toLowerCase();
@@ -68,11 +68,11 @@ const LearningPathCreatorView: React.FC = () => {
     };
 
     return (
-        <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-y-auto">
+        <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
             <h1 className="text-3xl font-bold text-white mb-2">Personalized Learning Path Creator</h1>
             <p className="text-slate-400 mb-6">Enter your learning goal, and the AI will generate a customized, step-by-step path for you.</p>
             
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 max-w-4xl mx-auto w-full">
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-sm p-6 max-w-4xl mx-auto w-full">
                 <div className="flex flex-col sm:flex-row gap-2">
                     <input
                         type="text"
@@ -80,13 +80,13 @@ const LearningPathCreatorView: React.FC = () => {
                         onChange={e => setGoal(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="e.g., 'Learn Python for data science' or 'Understand quantum mechanics'"
-                        className="flex-grow bg-slate-800 border border-slate-600 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        className="flex-grow bg-slate-800 border border-slate-600 rounded-sm px-4 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                         disabled={isLoading}
                     />
                     <button
                         onClick={handleGenerate}
                         disabled={isLoading || !goal.trim()}
-                        className="bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="bg-cyan-600 text-white font-semibold px-5 py-2 rounded-sm hover:bg-cyan-500 transition-colors disabled:bg-cyan-900/50 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {isLoading ? <LoadingSpinner /> : <MapIcon className="w-5 h-5" />}
                         {isLoading ? 'Creating...' : 'Create Path'}
@@ -107,21 +107,21 @@ const LearningPathCreatorView: React.FC = () => {
                         <div className="flex justify-end mb-4">
                             <button
                                 onClick={handleDownloadPdf}
-                                className="flex items-center gap-2 bg-slate-700 text-white font-semibold px-4 py-2 rounded-md hover:bg-slate-600 transition-colors"
+                                className="flex items-center gap-2 bg-slate-700 text-white font-semibold px-4 py-2 rounded-sm hover:bg-slate-600 transition-colors"
                                 aria-label="Download learning path as PDF"
                             >
                                 <DownloadIcon />
                                 <span>Download PDF</span>
                             </button>
                         </div>
-                        <div ref={pathRef} className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                            <h2 className="text-2xl font-bold text-center text-white mb-6">Your Learning Path for: <span className="text-purple-400">{currentGoal}</span></h2>
+                        <div ref={pathRef} className="bg-slate-800/50 border border-slate-700/50 rounded-sm p-6">
+                            <h2 className="text-2xl font-bold text-center text-white mb-6">Your Learning Path for: <span className="text-cyan-400">{currentGoal}</span></h2>
                             <div className="space-y-6">
                                 {learningPath.map((module, index) => (
-                                    <div key={index} className="bg-slate-800/50 rounded-lg p-6 border border-slate-700/50">
-                                        <h3 className="text-xl font-semibold text-indigo-400 mb-2">Module {index + 1}: {module.moduleTitle}</h3>
+                                    <div key={index} className="bg-slate-800/50 rounded-sm p-6 border border-slate-700/50">
+                                        <h3 className="text-xl font-semibold text-cyan-400 mb-2">Module {index + 1}: {module.moduleTitle}</h3>
                                         <p className="text-slate-400 mb-4 text-sm">{module.description}</p>
-                                        <h4 className="font-semibold text-purple-300 mb-2">Key Topics to Cover:</h4>
+                                        <h4 className="font-semibold text-cyan-300 mb-2">Key Topics to Cover:</h4>
                                         <ul className="space-y-2 list-disc list-inside text-slate-300 text-sm">
                                             {module.keyTopics.map((topic, topicIndex) => (
                                                 <li key={topicIndex}>{topic}</li>
@@ -130,7 +130,7 @@ const LearningPathCreatorView: React.FC = () => {
 
                                         {module.resources && module.resources.length > 0 && (
                                             <div className="mt-4 pt-4 border-t border-slate-700/50">
-                                                <h4 className="font-semibold text-purple-300 mb-3">Recommended Resources:</h4>
+                                                <h4 className="font-semibold text-cyan-300 mb-3">Recommended Resources:</h4>
                                                 <div className="space-y-3">
                                                     {module.resources.map((resource, resourceIndex) => (
                                                         <a 
@@ -138,9 +138,9 @@ const LearningPathCreatorView: React.FC = () => {
                                                             href={resource.url}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="flex items-start gap-3 p-3 bg-slate-900/70 rounded-md hover:bg-slate-700/70 border border-slate-700/50 transition-colors group"
+                                                            className="flex items-start gap-3 p-3 bg-slate-900/70 rounded-sm hover:bg-slate-700/70 border border-slate-700/50 transition-colors group"
                                                         >
-                                                            <div className="flex-shrink-0 mt-1 text-indigo-400">
+                                                            <div className="flex-shrink-0 mt-1 text-cyan-400">
                                                                 {getResourceIcon(resource.type)}
                                                             </div>
                                                             <div>

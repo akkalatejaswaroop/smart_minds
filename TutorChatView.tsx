@@ -141,22 +141,22 @@ const TutorChatView: React.FC = () => {
     };
 
     return (
-        <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-hidden">
+        <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden">
             <h1 className="text-3xl font-bold text-white mb-2">AI Tutor Chat</h1>
             <p className="text-slate-400 mb-6">Ask questions, or upload a PDF/DOCX to discuss its content.</p>
             
-            <div className="flex-1 flex flex-col bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+            <div className="flex-1 flex flex-col bg-slate-800/50 border border-slate-700/50 rounded-sm overflow-hidden">
                 <div className="flex-1 p-6 space-y-4 overflow-y-auto">
                     {messages.map((msg, index) => (
                         <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-xl p-3 rounded-lg ${msg.role === 'user' ? 'bg-indigo-700 text-white' : 'bg-slate-700 text-slate-200'}`}>
+                            <div className={`max-w-xl p-3 rounded-sm ${msg.role === 'user' ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-200'}`}>
                                 <div className="prose prose-invert prose-p:my-0" dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(msg.text) }} />
                             </div>
                         </div>
                     ))}
                     {isLoading && (
                          <div className="flex justify-start">
-                            <div className="max-w-xl p-3 rounded-lg bg-slate-700 text-slate-200 flex items-center gap-2">
+                            <div className="max-w-xl p-3 rounded-sm bg-slate-700 text-slate-200 flex items-center gap-2">
                                 <LoadingSpinner className="w-4 h-4" />
                                 <span>Mindy is thinking...</span>
                             </div>
@@ -164,16 +164,16 @@ const TutorChatView: React.FC = () => {
                     )}
                     {error && (
                         <div className="flex justify-start">
-                           <div className="max-w-xl p-3 rounded-lg bg-red-900/50 border border-red-500/50 text-red-300">
+                           <div className="max-w-xl p-3 rounded-sm bg-red-900/50 border border-red-500/50 text-red-300">
                                <p>{error}</p>
                            </div>
                        </div>
                     )}
                     <div ref={messagesEndRef} />
                 </div>
-                <div className="p-4 border-t border-slate-700 bg-slate-800">
+                <div className="p-4 border-t border-slate-700/50 bg-slate-800">
                     {(uploadedFile || isFileReading) && (
-                        <div className="flex items-center justify-between bg-slate-700 px-3 py-1.5 rounded-t-md text-sm mb-2">
+                        <div className="flex items-center justify-between bg-slate-700 px-3 py-1.5 rounded-t-sm text-sm mb-2">
                             <div className="flex items-center gap-2 text-slate-300 truncate">
                                 {isFileReading ? <LoadingSpinner/> : <PaperclipIcon className="w-4 h-4" />}
                                 <span className="font-medium truncate">{isFileReading ? 'Reading file...' : uploadedFile?.name}</span>
@@ -183,7 +183,7 @@ const TutorChatView: React.FC = () => {
                     )}
                     <div className="flex gap-2">
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.docx" />
-                        <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 bg-slate-700 rounded-md hover:bg-slate-600 hover:text-white" disabled={isLoading || isFileReading} aria-label="Attach file">
+                        <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 bg-slate-700 rounded-sm hover:bg-slate-600 hover:text-white" disabled={isLoading || isFileReading} aria-label="Attach file">
                             <PaperclipIcon />
                         </button>
                         <div className="relative flex-grow">
@@ -193,12 +193,12 @@ const TutorChatView: React.FC = () => {
                                 onChange={e => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder={uploadedFile ? `Ask about ${uploadedFile.name}...` : "Ask me anything or use the mic..."}
-                                className="w-full bg-slate-700 border border-slate-600 rounded-md px-4 py-2 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                className="w-full bg-slate-700 border border-slate-600 rounded-sm px-4 py-2 pr-10 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                                 disabled={isLoading || isFileReading}
                             />
                             <button
                                 onClick={handleMicClick}
-                                className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-white ${isListening ? 'text-indigo-400 animate-pulse' : ''}`}
+                                className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-white ${isListening ? 'text-cyan-400 animate-pulse' : ''}`}
                                 aria-label="Use microphone to dictate"
                                 disabled={isLoading || isFileReading}
                             >
@@ -208,7 +208,7 @@ const TutorChatView: React.FC = () => {
                         <button
                             onClick={handleSendMessage}
                             disabled={isLoading || !input.trim() || isFileReading}
-                            className="bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center"
+                            className="bg-cyan-600 text-white font-semibold px-5 py-2 rounded-sm hover:bg-cyan-500 transition-colors disabled:bg-cyan-900/50 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center"
                         >
                             Send
                         </button>

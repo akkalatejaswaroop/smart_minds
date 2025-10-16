@@ -92,7 +92,7 @@ const App: React.FC = () => {
 
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-300 font-sans flex">
+    <div className="relative min-h-screen bg-slate-950 text-slate-300 font-sans flex blueprint-background">
       <FeatureShowcasePopup 
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}

@@ -25,16 +25,16 @@ export const VoiceCommandOverlay: React.FC<VoiceCommandOverlayProps> = ({ isOpen
       >
         <button
           onClick={onClose}
-          className="absolute -top-8 -right-4 p-2 text-slate-400 rounded-full hover:bg-slate-700 hover:text-white"
+          className="absolute -top-8 -right-4 p-2 text-slate-400 rounded-full hover:bg-slate-700/50 hover:text-white"
           aria-label="Close voice command overlay"
         >
           <XIcon />
         </button>
-        <div className={`relative w-32 h-32 mx-auto rounded-full flex items-center justify-center transition-colors duration-300 ${isListening ? 'bg-indigo-500/30' : 'bg-slate-700/50'}`}>
-          <div className={`absolute w-full h-full rounded-full ${isListening ? 'animate-pulse bg-indigo-500/50' : ''}`}></div>
+        <div className={`relative w-32 h-32 mx-auto rounded-full flex items-center justify-center transition-colors duration-300 ${isListening ? 'bg-cyan-500/30' : 'bg-slate-700/50'}`}>
+          <div className={`absolute w-full h-full rounded-full ${isListening ? 'animate-pulse bg-cyan-500/50' : ''}`}></div>
           <MicrophoneIcon />
         </div>
-        <h2 className="mt-6 text-2xl font-bold text-white">
+        <h2 className="mt-6 text-2xl font-bold text-white font-mono">
           {isListening ? "Listening..." : "Preparing..."}
         </h2>
         <p className="mt-2 text-slate-400">

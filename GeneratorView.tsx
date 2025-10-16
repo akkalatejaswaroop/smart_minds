@@ -150,16 +150,16 @@ const GeneratorView: React.FC = () => {
   const isGenerateDisabled = isLoading || !conceptInput.trim() || (generationMode === 'document' && (!fileContent || isFileReading));
 
   return (
-    <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-y-auto">
+    <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
         {/* Unified Controls Panel */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mb-6 space-y-4">
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-sm p-4 mb-6 space-y-4">
             <h3 className="text-lg font-semibold text-white">Generator Controls</h3>
             
             <div>
                  <label className="text-sm font-medium text-slate-400 block mb-2">Generation Mode</label>
-                 <div className="flex items-center bg-slate-900 rounded-lg p-1 self-start">
-                    <button onClick={() => setGenerationMode('topic')} className={`px-4 py-1 text-sm rounded-md ${generationMode === 'topic' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-700'}`}>From Topic</button>
-                    <button onClick={() => setGenerationMode('document')} className={`px-4 py-1 text-sm rounded-md ${generationMode === 'document' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-700'}`}>From Document</button>
+                 <div className="flex items-center bg-slate-900 rounded-sm p-1 self-start">
+                    <button onClick={() => setGenerationMode('topic')} className={`px-4 py-1 text-sm rounded-sm ${generationMode === 'topic' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700'}`}>From Topic</button>
+                    <button onClick={() => setGenerationMode('document')} className={`px-4 py-1 text-sm rounded-sm ${generationMode === 'document' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700'}`}>From Document</button>
                 </div>
             </div>
 
@@ -167,12 +167,12 @@ const GeneratorView: React.FC = () => {
               <div>
                   <label className="text-sm font-medium text-slate-400 block mb-2">Reference Document</label>
                   {uploadedFile && !isFileReading ? (
-                     <div className="flex items-center justify-between bg-slate-900 p-3 rounded-md">
+                     <div className="flex items-center justify-between bg-slate-900 p-3 rounded-sm">
                         <p className="text-sm text-slate-300 truncate">Ready: {uploadedFile.name}</p>
                         <button onClick={handleClearFile} className="p-1 text-slate-400 hover:text-white rounded-full"><XIcon className="w-4 h-4" /></button>
                      </div>
                   ) : (
-                    <label htmlFor="file-upload-generator" className="relative block w-full border-2 border-dashed border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-indigo-500 transition-colors">
+                    <label htmlFor="file-upload-generator" className="relative block w-full border-2 border-dashed border-slate-600 rounded-sm p-6 text-center cursor-pointer hover:border-cyan-500 transition-colors">
                         <UploadCloudIcon className="mx-auto h-8 w-8 text-slate-500"/>
                         <span className="mt-2 block text-sm font-semibold text-slate-300">
                             {isFileReading ? 'Reading file...' : 'Click to upload PDF or DOCX'}
@@ -196,10 +196,10 @@ const GeneratorView: React.FC = () => {
                         onChange={e => setConceptInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={generationMode === 'document' ? "e.g., 'Supervised Learning'" : "e.g., 'Quantum Entanglement'"}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-md py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-900 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-sm py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:bg-slate-900 disabled:cursor-not-allowed"
                         disabled={isLoading}
                     />
-                    <button onClick={handleMicClick} className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white disabled:opacity-50 ${isListening ? 'text-indigo-400 animate-pulse' : ''}`} aria-label="Use microphone to dictate concept" disabled={isLoading}>
+                    <button onClick={handleMicClick} className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white disabled:opacity-50 ${isListening ? 'text-cyan-400 animate-pulse' : ''}`} aria-label="Use microphone to dictate concept" disabled={isLoading}>
                       <MicrophoneIcon />
                     </button>
                 </div>
@@ -207,13 +207,13 @@ const GeneratorView: React.FC = () => {
 
             <div>
                  <label className="text-sm font-medium text-slate-400 block mb-2">Choose Output Type</label>
-                 <div className="flex items-center bg-slate-800 rounded-lg p-1 flex-wrap">
+                 <div className="flex items-center bg-slate-800/80 p-1 flex-wrap rounded-sm">
                     {(['explanation', 'presentation', 'examples', 'summary', 'quiz', 'concept-map'] as const).map((type) => (
                         <button
                             key={type}
                             onClick={() => setOutputType(type)}
-                            className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                                outputType === type ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+                            className={`px-3 py-2 text-sm font-medium rounded-sm transition-colors ${
+                                outputType === type ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'
                             }`}
                             aria-pressed={outputType === type}
                         >
@@ -226,7 +226,7 @@ const GeneratorView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label htmlFor="complexity-slider" className="text-sm font-medium text-slate-400 block mb-2">
-                        Complexity: <span className="font-bold text-indigo-400">{complexityMap[complexity]}</span>
+                        Complexity: <span className="font-bold text-cyan-400">{complexityMap[complexity]}</span>
                     </label>
                     <input
                         id="complexity-slider"
@@ -236,7 +236,7 @@ const GeneratorView: React.FC = () => {
                         step="1"
                         value={complexity}
                         onChange={e => setComplexity(Number(e.target.value))}
-                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                        className="w-full h-2 bg-slate-700 rounded-sm appearance-none cursor-pointer accent-cyan-500"
                     />
                 </div>
                 {outputType !== 'concept-map' && outputType !== 'quiz' && (
@@ -245,7 +245,7 @@ const GeneratorView: React.FC = () => {
                       <select
                           value={purpose}
                           onChange={(e) => setPurpose(e.target.value)}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                       >
                           {PURPOSES.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
                       </select>
@@ -256,7 +256,7 @@ const GeneratorView: React.FC = () => {
                     <select 
                         value={language} 
                         onChange={e => setLanguage(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                     >
                         {LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
                     </select>
@@ -267,7 +267,7 @@ const GeneratorView: React.FC = () => {
                 <button
                     onClick={handleGenerateContent}
                     disabled={isGenerateDisabled}
-                    className="w-full bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full bg-cyan-600 text-white font-semibold px-5 py-2.5 rounded-sm hover:bg-cyan-500 transition-colors disabled:bg-cyan-900/50 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                     {isLoading ? (
                     <>

@@ -37,11 +37,11 @@ const DebateGeneratorView: React.FC = () => {
     };
 
     return (
-        <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-900/50 overflow-y-auto">
+        <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
             <h1 className="text-3xl font-bold text-white mb-2">AI Debate Generator</h1>
             <p className="text-slate-400 mb-6">Enter a topic to generate compelling arguments for both sides of the debate.</p>
 
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 max-w-4xl mx-auto w-full">
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-sm p-6 max-w-4xl mx-auto w-full">
                 <div className="flex flex-col sm:flex-row gap-2">
                     <input
                         type="text"
@@ -49,13 +49,13 @@ const DebateGeneratorView: React.FC = () => {
                         onChange={e => setTopic(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="e.g., 'Should artificial intelligence be regulated?'"
-                        className="flex-grow bg-slate-800 border border-slate-600 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        className="flex-grow bg-slate-800 border border-slate-600 rounded-sm px-4 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                         disabled={isLoading}
                     />
                     <button
                         onClick={handleGenerate}
                         disabled={isLoading || !topic.trim()}
-                        className="bg-indigo-700 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition-colors disabled:bg-indigo-900/50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="bg-cyan-600 text-white font-semibold px-5 py-2 rounded-sm hover:bg-cyan-500 transition-colors disabled:bg-cyan-900/50 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {isLoading ? <LoadingSpinner /> : <ScaleIcon className="w-5 h-5" />}
                         {isLoading ? 'Generating...' : 'Generate Debate'}
@@ -73,18 +73,18 @@ const DebateGeneratorView: React.FC = () => {
                 
                 {debateArgs && (
                     <div className="mt-6 animate-fade-in">
-                        <h2 className="text-2xl font-bold text-center text-white mb-6">Debate Topic: <span className="text-purple-400">{topic}</span></h2>
+                        <h2 className="text-2xl font-bold text-center text-white mb-6">Debate Topic: <span className="text-cyan-400">{topic}</span></h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Arguments For */}
-                            <div className="bg-slate-800/50 border border-green-500/30 rounded-lg p-6">
-                                <h3 className="text-xl font-semibold text-green-400 mb-4">Arguments For (Pro)</h3>
+                            <div className="bg-slate-800/50 border border-cyan-500/30 rounded-sm p-6">
+                                <h3 className="text-xl font-semibold text-cyan-400 mb-4">Arguments For (Pro)</h3>
                                 <ul className="space-y-4 list-disc list-inside text-slate-300">
                                     {debateArgs.pro.map((arg, index) => <li key={`pro-${index}`}>{arg}</li>)}
                                 </ul>
                             </div>
                             {/* Arguments Against */}
-                            <div className="bg-slate-800/50 border border-red-500/30 rounded-lg p-6">
-                                <h3 className="text-xl font-semibold text-red-400 mb-4">Arguments Against (Con)</h3>
+                            <div className="bg-slate-800/50 border border-orange-500/30 rounded-sm p-6">
+                                <h3 className="text-xl font-semibold text-orange-400 mb-4">Arguments Against (Con)</h3>
                                 <ul className="space-y-4 list-disc list-inside text-slate-300">
                                     {debateArgs.con.map((arg, index) => <li key={`con-${index}`}>{arg}</li>)}
                                 </ul>

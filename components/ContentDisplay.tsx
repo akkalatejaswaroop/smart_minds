@@ -60,22 +60,22 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             {!isQuizSubmitted ? (
                 <>
                     {quizData.map((q, qIndex) => (
-                        <div key={qIndex} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                        <div key={qIndex} className="bg-slate-800/50 p-4 rounded-sm border border-slate-700/50">
                             <p className="font-semibold mb-3">{qIndex + 1}. {q.question}</p>
                             <div className="space-y-2">
                                 {q.options.map((option, oIndex) => (
-                                    <label key={oIndex} className="flex items-center p-2 rounded-md hover:bg-slate-700 cursor-pointer">
+                                    <label key={oIndex} className="flex items-center p-2 rounded-sm hover:bg-slate-700/50 cursor-pointer">
                                         <input
                                             type="radio"
                                             name={`question-${qIndex}`}
                                             value={option}
                                             onChange={() => handleAnswerChange(qIndex, option)}
                                             checked={userAnswers[qIndex] === option}
-                                            className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-indigo-500 focus:ring-indigo-600"
+                                            className="mr-3 h-4 w-4 bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600"
                                         />
                                         <span>{option}</span>
                                     </label>
@@ -83,30 +83,30 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                             </div>
                         </div>
                     ))}
-                    <button onClick={handleSubmitQuiz} className="w-full bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-600 transition-colors">Submit Quiz</button>
+                    <button onClick={handleSubmitQuiz} className="w-full bg-cyan-600 text-white font-semibold py-2 px-4 rounded-sm hover:bg-cyan-500 transition-colors">Submit Quiz</button>
                 </>
             ) : (
                 <>
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-bold text-white">Quiz Results</h2>
-                        <p className="text-lg text-purple-400">You scored {quizScore} out of {quizData.length}</p>
+                        <p className="text-lg text-cyan-400">You scored {quizScore} out of {quizData.length}</p>
                     </div>
                     {quizData.map((q, qIndex) => {
                         const userAnswer = userAnswers[qIndex];
                         const isCorrect = userAnswer === q.answer;
                         return (
-                            <div key={qIndex} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 mb-4">
+                            <div key={qIndex} className="bg-slate-800/50 p-4 rounded-sm border border-slate-700/50 mb-4">
                                 <p className="font-semibold mb-2">{qIndex + 1}. {q.question}</p>
                                 <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}</p>
                                 {!isCorrect && <p className="text-sm text-slate-300">Correct answer: {q.answer}</p>}
-                                <div className="mt-3 pt-3 border-t border-slate-700">
-                                    <p className="text-sm font-semibold text-indigo-400">Explanation:</p>
+                                <div className="mt-3 pt-3 border-t border-slate-700/50">
+                                    <p className="text-sm font-semibold text-cyan-400">Explanation:</p>
                                     <p className="text-sm text-slate-400">{q.explanation}</p>
                                 </div>
                             </div>
                         );
                     })}
-                    <button onClick={handleTryAgain} className="w-full bg-slate-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-slate-500 transition-colors">Try Again</button>
+                    <button onClick={handleTryAgain} className="w-full bg-slate-600 text-white font-semibold py-2 px-4 rounded-sm hover:bg-slate-500 transition-colors">Try Again</button>
                 </>
             )}
         </div>
@@ -143,18 +143,18 @@ const OutputActions: React.FC<{
     const handleTtsToggle = () => isSpeaking ? cancel() : speak();
     
     return (
-        <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-slate-700">
-             <button onClick={handleCopy} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Copy to clipboard">
+        <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-slate-700/50">
+             <button onClick={handleCopy} className="p-2 rounded-sm bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Copy to clipboard">
                 <span className="text-sm">{isCopied ? 'Copied!' : 'Copy'}</span><CopyIcon />
             </button>
-             <button onClick={handleDocxExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Download as DOCX">
+             <button onClick={handleDocxExport} className="p-2 rounded-sm bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Download as DOCX">
                 <span>DOCX</span><DownloadIcon />
             </button>
-             <button onClick={handlePdfExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Download as PDF">
+             <button onClick={handlePdfExport} className="p-2 rounded-sm bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Download as PDF">
                 <span>PDF</span><DownloadIcon />
             </button>
             {isAvailable && (
-                <button onClick={handleTtsToggle} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label={isSpeaking ? "Stop speech" : "Read aloud"}>
+                <button onClick={handleTtsToggle} className="p-2 rounded-sm bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label={isSpeaking ? "Stop speech" : "Read aloud"}>
                     {isSpeaking ? <SquareIcon /> : <Volume2Icon />}
                 </button>
             )}
@@ -184,7 +184,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
         } catch (e) {
           console.error('Mermaid rendering failed:', e);
           if (mermaidRef.current) {
-              mermaidRef.current.innerHTML = `<p class="text-red-400">Error rendering concept map. Mermaid syntax might be invalid.</p><pre class="text-xs text-slate-400 p-2 bg-slate-900 rounded-md">${generatedContent.mermaidCode}</pre>`;
+              mermaidRef.current.innerHTML = `<p class="text-red-400">Error rendering concept map. Mermaid syntax might be invalid.</p><pre class="text-xs text-slate-400 p-2 bg-slate-900 rounded-sm">${generatedContent.mermaidCode}</pre>`;
           }
         }
       }
@@ -226,7 +226,7 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
     }
     
     return (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-sm p-6">
             <div ref={contentRef} className="prose prose-invert max-w-none">
                 {outputType === 'concept-map' && (
                     <>

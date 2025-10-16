@@ -26,32 +26,32 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
   return (
     <aside className={`
-      bg-slate-900 flex flex-col flex-shrink-0 overflow-hidden 
+      bg-slate-900/90 backdrop-blur-sm flex flex-col flex-shrink-0 overflow-hidden 
       transition-all duration-300 ease-in-out 
       fixed md:relative inset-y-0 left-0 z-30 transform md:translate-x-0
-      ${isOpen ? 'w-80 translate-x-0 border-r border-slate-700' : 'w-0 -translate-x-full md:w-0 border-transparent'}
+      ${isOpen ? 'w-80 translate-x-0 border-r border-slate-700/50' : 'w-0 -translate-x-full md:w-0 border-transparent'}
     `}>
       <div className="w-80 h-full flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-white">SMART MINDS</h2>
-          <button onClick={onClose} className="p-2 -mr-2 text-slate-400 rounded-md md:hidden hover:bg-slate-700" aria-label="Close menu">
+        <div className="flex items-center justify-between p-4 border-b border-slate-700/50 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-white font-mono">SMART MINDS</h2>
+          <button onClick={onClose} className="p-2 -mr-2 text-slate-400 rounded-sm md:hidden hover:bg-slate-700/50" aria-label="Close menu">
               <XIcon />
           </button>
         </div>
 
         {/* Navigation */}
-        <div className="p-4 border-b border-slate-700">
-           <h3 className="text-sm font-semibold text-slate-400 mb-2">Navigation</h3>
+        <div className="p-4 border-b border-slate-700/50">
+           <h3 className="text-sm font-semibold text-slate-400 mb-2 font-mono uppercase tracking-wider">Navigation</h3>
            <div className="space-y-2">
-              <button onClick={() => handleSetView('generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'generator' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'generator' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <BrainCircuitIcon />
                   <span>AI Content Generator</span>
               </button>
-              <button onClick={() => handleSetView('library')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'library' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('library')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'library' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <BookOpenIcon />
                   <span>Digital Library</span>
               </button>
-              <button onClick={() => handleSetView('book-summarizer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'book-summarizer' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('book-summarizer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'book-summarizer' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <FileTextIcon />
                   <span>Book & Doc Analyzer</span>
               </button>
@@ -59,22 +59,22 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         </div>
         
         {/* New AI Tools Navigation */}
-        <div className="p-4 border-b border-slate-700">
-           <h3 className="text-sm font-semibold text-slate-400 mb-2">AI Tools</h3>
+        <div className="p-4 border-b border-slate-700/50">
+           <h3 className="text-sm font-semibold text-slate-400 mb-2 font-mono uppercase tracking-wider">AI Tools</h3>
            <div className="space-y-2">
-              <button onClick={() => handleSetView('learning-path')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'learning-path' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('learning-path')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'learning-path' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <MapIcon />
                   <span>Learning Path Creator</span>
               </button>
-              <button onClick={() => handleSetView('tutor-chat')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'tutor-chat' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('tutor-chat')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'tutor-chat' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <MessageSquareIcon />
                   <span>AI Tutor Chat</span>
               </button>
-              <button onClick={() => handleSetView('code-explainer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'code-explainer' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('code-explainer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'code-explainer' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <CodeIcon />
                   <span>Code Explainer</span>
               </button>
-              <button onClick={() => handleSetView('debate-generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'debate-generator' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+              <button onClick={() => handleSetView('debate-generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'debate-generator' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <ScaleIcon />
                   <span>AI Debate Generator</span>
               </button>
@@ -82,13 +82,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         </div>
         
         {/* Download App Section */}
-        <div className="p-4 border-b border-slate-700">
-           <h3 className="text-sm font-semibold text-slate-400 mb-2">Get The App</h3>
+        <div className="p-4 border-b border-slate-700/50">
+           <h3 className="text-sm font-semibold text-slate-400 mb-2 font-mono uppercase tracking-wider">Get The App</h3>
            <a 
               href="https://appsgeyser.io/19158917/Smart-Minds" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-emerald-600 text-white hover:bg-emerald-500"
+              className="w-full flex items-center justify-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors bg-cyan-600 text-white hover:bg-cyan-500"
               aria-label="Download for Android"
             >
               <DownloadIcon />
@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           {currentView === 'code-explainer' && (
               <p className="text-xs text-slate-500">Paste a code snippet to get a detailed explanation of how it works or to find and fix potential bugs.</p>
           )}
-          {currentView === 'debate-generator' && (
+           {currentView === 'debate-generator' && (
               <p className="text-xs text-slate-500">Enter a topic to generate compelling arguments for both sides, helping you practice critical thinking.</p>
           )}
         </div>
