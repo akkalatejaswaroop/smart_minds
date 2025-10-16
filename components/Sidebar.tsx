@@ -74,6 +74,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                   <CodeIcon />
                   <span>Code Explainer</span>
               </button>
+              <button onClick={() => handleSetView('debate-generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${currentView === 'debate-generator' ? 'bg-indigo-700 text-white' : 'hover:bg-slate-800'}`}>
+                  <ScaleIcon />
+                  <span>AI Debate Generator</span>
+              </button>
            </div>
         </div>
         
@@ -112,6 +116,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           )}
           {currentView === 'code-explainer' && (
               <p className="text-xs text-slate-500">Paste a code snippet to get a detailed explanation of how it works or to find and fix potential bugs.</p>
+          )}
+          {currentView === 'debate-generator' && (
+              <p className="text-xs text-slate-500">Enter a topic to generate compelling arguments for both sides, helping you practice critical thinking.</p>
           )}
         </div>
 

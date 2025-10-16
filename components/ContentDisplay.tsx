@@ -5,11 +5,11 @@ declare global {
   }
 }
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import type { OutputType, GeneratedContent, QuizQuestion } from '../types';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
 import { exportAsPdf, exportAsDocx } from '../utils/export';
-import { CopyIcon, DownloadIcon, SquareIcon, Volume2Icon, ClipboardCodeIcon } from './icons';
+import { CopyIcon, DownloadIcon, SquareIcon, Volume2Icon, BrainCircuitIcon } from './icons';
 import { renderSimpleMarkdown } from '../utils/markdown';
 
 interface ContentDisplayProps {
@@ -18,6 +18,7 @@ interface ContentDisplayProps {
   isLoading: boolean;
   error: string | null;
   conceptName?: string;
+  language?: string;
 }
 
 // --- Reusable Quiz Component ---
@@ -82,12 +83,7 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                             </div>
                         </div>
                     ))}
-                    <button 
-                      onClick={handleSubmitQuiz} 
-                      className="w-full bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-600 transition-colors"
-                    >
-                        Submit Quiz
-                    </button>
+                    <button onClick={handleSubmitQuiz} className="w-full bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-600 transition-colors">Submit Quiz</button>
                 </>
             ) : (
                 <>
@@ -101,10 +97,8 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                         return (
                             <div key={qIndex} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 mb-4">
                                 <p className="font-semibold mb-2">{qIndex + 1}. {q.question}</p>
-                                <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                                    Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}
-                                </p>
-                                 {!isCorrect && <p className="text-sm text-slate-300">Correct answer: {q.answer}</p>}
+                                <p className={`text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>Your answer: {userAnswer || 'Not answered'} {isCorrect ? ' (Correct)' : ` (Incorrect)`}</p>
+                                {!isCorrect && <p className="text-sm text-slate-300">Correct answer: {q.answer}</p>}
                                 <div className="mt-3 pt-3 border-t border-slate-700">
                                     <p className="text-sm font-semibold text-indigo-400">Explanation:</p>
                                     <p className="text-sm text-slate-400">{q.explanation}</p>
@@ -112,13 +106,57 @@ const QuizDisplay: React.FC<{ quizData: QuizQuestion[] }> = ({ quizData }) => {
                             </div>
                         );
                     })}
-                    <button 
-                      onClick={handleTryAgain} 
-                      className="w-full bg-slate-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-slate-500 transition-colors"
-                    >
-                        Try Again
-                    </button>
+                    <button onClick={handleTryAgain} className="w-full bg-slate-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-slate-500 transition-colors">Try Again</button>
                 </>
+            )}
+        </div>
+    );
+};
+
+const OutputActions: React.FC<{
+  contentRef: React.RefObject<HTMLDivElement>;
+  rawText: string;
+  fileName: string;
+  language: string;
+}> = ({ contentRef, rawText, fileName, language }) => {
+    const [isCopied, setIsCopied] = useState(false);
+    const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(rawText, language);
+
+    const handleCopy = () => {
+        if (rawText) {
+            navigator.clipboard.writeText(rawText).then(() => {
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000);
+            });
+        }
+    };
+    const handlePdfExport = () => {
+        if (contentRef.current) {
+            exportAsPdf(contentRef.current, fileName);
+        }
+    };
+    const handleDocxExport = () => {
+        if (contentRef.current) {
+            exportAsDocx(contentRef.current, fileName);
+        }
+    };
+    const handleTtsToggle = () => isSpeaking ? cancel() : speak();
+    
+    return (
+        <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-slate-700">
+             <button onClick={handleCopy} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Copy to clipboard">
+                <span className="text-sm">{isCopied ? 'Copied!' : 'Copy'}</span><CopyIcon />
+            </button>
+             <button onClick={handleDocxExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Download as DOCX">
+                <span>DOCX</span><DownloadIcon />
+            </button>
+             <button onClick={handlePdfExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300 flex items-center gap-2" aria-label="Download as PDF">
+                <span>PDF</span><DownloadIcon />
+            </button>
+            {isAvailable && (
+                <button onClick={handleTtsToggle} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label={isSpeaking ? "Stop speech" : "Read aloud"}>
+                    {isSpeaking ? <SquareIcon /> : <Volume2Icon />}
+                </button>
             )}
         </div>
     );
@@ -130,141 +168,92 @@ export const ContentDisplay: React.FC<ContentDisplayProps> = ({
   isLoading,
   error,
   conceptName,
+  language = 'English',
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const mermaidRef = useRef<HTMLDivElement>(null);
-  const [mermaidSvg, setMermaidSvg] = useState('');
-  const [isCopied, setIsCopied] = useState(false);
-  const [isCodeCopied, setIsCodeCopied] = useState(false);
-
-  const textToCopy = outputType === 'concept-map'
-    ? generatedContent?.summary || ''
-    : generatedContent?.text || '';
-
-  const { isSpeaking, isAvailable, speak, cancel } = useTextToSpeech(textToCopy, 'English'); // Language can be passed if needed
 
   useEffect(() => {
     const renderMermaid = async () => {
-      if (outputType === 'concept-map' && generatedContent?.mermaidCode && mermaidRef.current) {
+      if (outputType === 'concept-map' && generatedContent?.mermaidCode && mermaidRef.current && window.mermaid) {
         try {
-          mermaidRef.current.innerHTML = '';
-          const { svg } = await window.mermaid.render('mermaid-graph', generatedContent.mermaidCode);
-          setMermaidSvg(svg);
+            mermaidRef.current.innerHTML = ''; // Clear previous
+            await window.mermaid.initialize({ startOnLoad: false });
+            const { svg } = await window.mermaid.render('mermaid-graph-display', generatedContent.mermaidCode);
+            mermaidRef.current.innerHTML = svg;
         } catch (e) {
           console.error('Mermaid rendering failed:', e);
-          setMermaidSvg('<p class="text-red-400">Error rendering concept map.</p>');
+          if (mermaidRef.current) {
+              mermaidRef.current.innerHTML = `<p class="text-red-400">Error rendering concept map. Mermaid syntax might be invalid.</p><pre class="text-xs text-slate-400 p-2 bg-slate-900 rounded-md">${generatedContent.mermaidCode}</pre>`;
+          }
         }
       }
     };
     renderMermaid();
   }, [outputType, generatedContent]);
-
-  const handleCopy = () => {
-    if (textToCopy) {
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-      });
+  
+  const rawTextForTts = useMemo(() => {
+    if (!generatedContent) return '';
+    if (outputType === 'concept-map') return generatedContent.summary || '';
+    if (outputType === 'quiz' && generatedContent.quiz) {
+      return generatedContent.quiz.map(q => `Question: ${q.question} Options: ${q.options.join(', ')}`).join('. ');
     }
+    return generatedContent.text || '';
+  }, [generatedContent, outputType]);
+
+
+  const renderContent = () => {
+    if (isLoading && !generatedContent) {
+        return (
+            <div className="text-center text-slate-400">
+                <p>Generating content... Please wait.</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return <div className="text-red-400 whitespace-pre-wrap">{error}</div>;
+    }
+
+    if (!generatedContent) {
+        return (
+            <div className="text-center text-slate-500">
+                <BrainCircuitIcon className="mx-auto w-12 h-12 mb-4" />
+                <h3 className="text-lg font-semibold">Your AI-generated content will appear here.</h3>
+                <p className="text-sm">Configure the options above and click "Generate Content" to begin.</p>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <div ref={contentRef} className="prose prose-invert max-w-none">
+                {outputType === 'concept-map' && (
+                    <>
+                        <div dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(generatedContent.summary || '') }} />
+                        <div ref={mermaidRef} className="mt-4 flex justify-center" />
+                    </>
+                )}
+                {outputType === 'quiz' && generatedContent.quiz && (
+                    <QuizDisplay quizData={generatedContent.quiz} />
+                )}
+                {outputType !== 'concept-map' && outputType !== 'quiz' && (
+                    <div dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(generatedContent.text || '') }} />
+                )}
+            </div>
+             {outputType !== 'quiz' && (
+                 <OutputActions
+                    contentRef={contentRef}
+                    rawText={rawTextForTts}
+                    fileName={`${conceptName || 'generated'}_${outputType}`}
+                    language={language}
+                />
+             )}
+        </div>
+    );
   };
   
-  const handleCopyCode = () => {
-    if (generatedContent?.mermaidCode) {
-        navigator.clipboard.writeText(generatedContent.mermaidCode).then(() => {
-            setIsCodeCopied(true);
-            setTimeout(() => setIsCodeCopied(false), 2000);
-        });
-    }
-  };
-
-  const handlePdfExport = () => {
-    if (contentRef.current) {
-      exportAsPdf(contentRef.current, `${conceptName}_${outputType}`);
-    }
-  };
-
-  const handleDocxExport = () => {
-    if (contentRef.current) {
-      exportAsDocx(contentRef.current, `${conceptName}_${outputType}`);
-    }
-  };
-
-  const handleTtsToggle = () => {
-    if (isSpeaking) {
-      cancel();
-    } else {
-      speak();
-    }
-  }
-
-  return (
-    <div className="flex-1 flex flex-col">
-      {/* Output */}
-      <div className="flex-1 bg-slate-800 rounded-lg p-6 overflow-y-auto relative border border-slate-700 min-h-[400px]">
-        {isLoading && !generatedContent && <div className="text-center text-slate-400">Generating... Please wait.</div>}
-        {error && <div className="text-red-400 whitespace-pre-wrap">{error}</div>}
-        
-        {!isLoading && !generatedContent && !error && (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                <h3 className="text-lg font-semibold">Ready to learn?</h3>
-                <p className="text-sm text-center">Enter a concept and choose your options above to get started.</p>
-            </div>
-        )}
-        
-        {generatedContent && !isLoading && (
-          <>
-            {outputType === 'quiz' && generatedContent.quiz ? (
-              <QuizDisplay quizData={generatedContent.quiz} />
-            ) : (
-              <div 
-                  ref={contentRef} 
-                  className="prose prose-invert max-w-none 
-                            prose-h1:text-pink-400 prose-h1:mb-4
-                            prose-h2:text-purple-400 prose-h2:border-b prose-h2:border-slate-600 prose-h2:pb-2 prose-h2:mt-8
-                            prose-h3:text-indigo-400
-                            prose-strong:text-purple-300
-                            prose-ul:list-disc prose-ul:pl-6
-                            prose-ol:list-decimal prose-ol:pl-6
-                            prose-li:my-1"
-              >
-                {outputType === 'concept-map' ? (
-                  <>
-                    <div dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(generatedContent.summary || '') }} />
-                    <div ref={mermaidRef} className="mt-4" dangerouslySetInnerHTML={{ __html: mermaidSvg }} />
-                  </>
-                ) : (
-                  <div dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(generatedContent.text || '') }} />
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-      
-      {/* Action Bar */}
-      {generatedContent && !isLoading && !error && outputType !== 'quiz' && (
-        <div className="flex items-center justify-end gap-2 mt-4">
-          {outputType === 'concept-map' && (
-             <button onClick={handleCopyCode} className="flex items-center gap-2 p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Copy Mermaid Code">
-                <span className="text-sm">{isCodeCopied ? 'Copied!' : 'Copy Code'}</span><ClipboardCodeIcon />
-            </button>
-          )}
-          <button onClick={handleCopy} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Copy to clipboard">
-            <span className="text-sm mr-2">{isCopied ? 'Copied!' : ''}</span><CopyIcon />
-          </button>
-          <button onClick={handlePdfExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Download as PDF">
-            <DownloadIcon /><span className="ml-1 text-xs">PDF</span>
-          </button>
-           <button onClick={handleDocxExport} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label="Download as DOCX">
-            <DownloadIcon /><span className="ml-1 text-xs">DOCX</span>
-          </button>
-          {isAvailable && (
-            <button onClick={handleTtsToggle} className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors text-slate-300" aria-label={isSpeaking ? "Stop text-to-speech" : "Start text-to-speech"}>
-              {isSpeaking ? <SquareIcon /> : <Volume2Icon />}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return renderContent();
 };
+
+export default ContentDisplay;
