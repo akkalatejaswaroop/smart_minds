@@ -6,6 +6,11 @@ declare global {
   }
 }
 
+// Interface for the structure of a text item from pdf.js
+interface PdfTextItem {
+  str: string;
+}
+
 export const extractTextFromFile = async (file: File): Promise<string> => {
   if (!window.pdfjsLib || !window.mammoth) {
     return Promise.reject(new Error('File reading libraries are not loaded yet. Please try again in a moment.'));
@@ -26,7 +31,7 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const content = await page.getTextContent();
-            text += content.items.map((item: any) => item.str).join(' ');
+            text += content.items.map((item: PdfTextItem) => item.str).join(' ');
           }
           resolve(text);
         } catch (error) {

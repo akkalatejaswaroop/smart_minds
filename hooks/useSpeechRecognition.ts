@@ -1,7 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// FIX: Add type definitions for the Web Speech API to fix "Cannot find name 'SpeechRecognition'".
-// This provides a minimal set of types for the properties and methods used in this hook.
+// Define more specific types for Web Speech API events to avoid using `any`
+interface SpeechRecognitionEvent {
+    results: {
+        [index: number]: {
+            [index: number]: {
+                transcript: string;
+                confidence: number;
+            };
+        };
+    };
+}
+
+interface SpeechRecognitionErrorEvent {
+    error: string;
+}
+
 declare global {
     interface SpeechRecognition {
         continuous: boolean;
@@ -12,8 +26,8 @@ declare global {
         stop(): void;
         abort(): void;
         onstart: (() => void) | null;
-        onresult: ((event: any) => void) | null;
-        onerror: ((event: any) => void) | null;
+        onresult: ((event: SpeechRecognitionEvent) => void) | null;
+        onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
         onend: (() => void) | null;
     }
 
@@ -53,12 +67,12 @@ export const useSpeechRecognition = () => {
             setError(null);
         };
 
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event) => {
             const currentTranscript = event.results[0][0].transcript;
             setTranscript(currentTranscript);
         };
 
-        recognition.onerror = (event: any) => {
+        recognition.onerror = (event) => {
             console.error('Speech recognition error', event.error);
             setError(`Speech recognition error: ${event.error}`);
             setIsListening(false);
