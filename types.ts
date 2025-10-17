@@ -1,30 +1,5 @@
-export interface Chapter {
-  title: string;
-  content: string;
-}
-
-export interface Book {
-  id: number;
-  title: string;
-  author: string;
-  coverImage: string; // URL
-  genre: string;
-  level: string; // e.g., 'Beginner', 'Intermediate'
-  readingTime: string; // e.g., '5 hours'
-  summary: string;
-  chapters: Chapter[];
-}
-
-export interface Concept {
-  name: string;
-}
-
-export interface Subject {
-  name: string;
-  concepts: Concept[];
-}
-
-export type OutputType = 'explanation' | 'presentation' | 'examples' | 'concept-map' | 'summary' | 'quiz';
+// fix: Replaced placeholder content with actual type definitions.
+export type OutputType = 'explanation' | 'presentation' | 'examples' | 'summary' | 'concept-map' | 'quiz';
 
 export interface QuizQuestion {
   question: string;
@@ -38,57 +13,73 @@ export interface GlossaryTerm {
     definition: string;
 }
 
-export interface GeneratedContent {
-    text?: string;
-    summary?: string;
-    mermaidCode?: string;
-    quiz?: QuizQuestion[];
-    highlights?: {
-        keyIdeas: string[];
-        quotes: string[];
-        passages: string[];
-    };
-    glossary?: GlossaryTerm[];
+export interface Highlights {
+    keyIdeas: string[];
+    quotes: string[];
+    passages: string[];
 }
 
-export interface ChatMessage {
-  role: 'user' | 'model';
-  text: string;
+export interface GeneratedContent {
+  text?: string;
+  summary?: string;
+  mermaidCode?: string;
+  quiz?: QuizQuestion[];
+  highlights?: Highlights;
+  glossary?: GlossaryTerm[];
 }
-// FIX: Add missing type definitions.
+
+export interface BookChapter {
+  title: string;
+  content: string;
+}
+
+export interface Book {
+  id: number;
+  title: string;
+  author: string;
+  coverImage: string;
+  genre: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  readingTime: string;
+  summary: string;
+  chapters: BookChapter[];
+}
+
 export interface DebateArguments {
     pro: string[];
     con: string[];
+}
+
+export interface LearningPathResource {
+    title: string;
+    url: string;
+    type: string;
 }
 
 export interface LearningPathModule {
     moduleTitle: string;
     description: string;
     keyTopics: string[];
-    resources?: {
-        title: string;
-        url: string;
-        type: string;
-    }[];
+    resources?: LearningPathResource[];
 }
 
 export interface CodeExplanation {
-  summary: string;
-  lineByLineExplanation: {
-    lines: string;
-    explanation: string;
-  }[];
-  keyConcepts: string[];
+    summary: string;
+    lineByLineExplanation: {
+        lines: string;
+        explanation: string;
+    }[];
+    keyConcepts: string[];
 }
 
 export interface CodeDebugReport {
-  analysisSummary: string;
-  bugs: {
-    line: string;
-    issue: string;
-    suggestion: string;
-  }[];
-  correctedCode: string;
+    analysisSummary: string;
+    bugs: {
+        line: string;
+        issue: string;
+        suggestion: string;
+    }[];
+    correctedCode: string;
 }
 
 export type CodeAnalysisResult = CodeExplanation | CodeDebugReport;

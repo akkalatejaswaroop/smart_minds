@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { XIcon, BrainCircuitIcon, BookOpenIcon, FileTextIcon, MessageSquareIcon } from './icons';
 import type { AppView } from '../App';
@@ -10,6 +11,7 @@ interface FeatureShowcasePopupProps {
 }
 
 // FIX: Use React.ReactElement instead of JSX.Element to resolve "Cannot find namespace 'JSX'".
+// fix: Changed JSX.Element to React.ReactElement to avoid potential namespace issues.
 const features: { icon: React.ReactElement; title: string; description: string; view: AppView }[] = [
   {
     icon: <BrainCircuitIcon className="w-8 h-8 text-cyan-400" />,

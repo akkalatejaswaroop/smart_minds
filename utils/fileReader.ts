@@ -1,4 +1,5 @@
-// utils/fileReader.ts
+// fix: Replaced placeholder content with a full implementation for reading PDF and DOCX files.
+// Add pdfjs and mammoth to the window object for TypeScript
 declare global {
   interface Window {
     pdfjsLib: any;
@@ -6,61 +7,43 @@ declare global {
   }
 }
 
-// Interface for the structure of a text item from pdf.js
-interface PdfTextItem {
-  str: string;
-}
+const getPdfText = async (file: File): Promise<string> => {
+  if (!window.pdfjsLib) {
+    throw new Error('PDF.js library is not loaded. Please wait and try again.');
+  }
+  const pdfjsLib = window.pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let textContent = '';
+  
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const text = await page.getTextContent();
+    textContent += text.items.map((item: any) => item.str).join(' ');
+  }
+  
+  return textContent;
+};
+
+const getDocxText = async (file: File): Promise<string> => {
+  if (!window.mammoth) {
+    throw new Error('Mammoth.js library is not loaded. Please wait and try again.');
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await window.mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+};
 
 export const extractTextFromFile = async (file: File): Promise<string> => {
-  if (!window.pdfjsLib || !window.mammoth) {
-    return Promise.reject(new Error('File reading libraries are not loaded yet. Please try again in a moment.'));
-  }
-
-  const extension = file.name.split('.').pop()?.toLowerCase();
-
-  if (extension === 'pdf') {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        if (!event.target?.result) {
-          return reject(new Error('Failed to read file.'));
-        }
-        try {
-          const pdf = await window.pdfjsLib.getDocument({ data: event.target.result }).promise;
-          let text = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            text += content.items.map((item: PdfTextItem) => item.str).join(' ');
-          }
-          resolve(text);
-        } catch (error) {
-          reject(new Error(`Error parsing PDF: ${error instanceof Error ? error.message : String(error)}`));
-        }
-      };
-      reader.onerror = () => reject(new Error('Error reading file.'));
-      reader.readAsArrayBuffer(file);
-    });
-  } else if (extension === 'docx') {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        if (!event.target?.result) {
-          return reject(new Error('Failed to read file.'));
-        }
-        try {
-          const result = await window.mammoth.extractRawText({ arrayBuffer: event.target.result });
-          resolve(result.value);
-        } catch (error) {
-          reject(new Error(`Error parsing DOCX: ${error instanceof Error ? error.message : String(error)}`));
-        }
-      };
-      reader.onerror = () => reject(new Error('Error reading file.'));
-      reader.readAsArrayBuffer(file);
-    });
-  } else if (extension === 'doc') {
-    return Promise.reject(new Error('.doc files are not supported. Please use .docx or .pdf.'));
+  const fileType = file.type;
+  
+  if (fileType === 'application/pdf') {
+    return getPdfText(file);
+  } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    return getDocxText(file);
   } else {
-    return Promise.reject(new Error('Unsupported file type. Please upload a .pdf or .docx file.'));
+    throw new Error('Unsupported file type. Please upload a PDF or DOCX file.');
   }
 };

@@ -1,5 +1,6 @@
 // FIX: Import new types to support added features.
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+// fix: Added Chat to the import from @google/genai.
+import { GoogleGenAI, Type, GenerateContentResponse, Chat } from "@google/genai";
 import type { OutputType, GeneratedContent, Book, DebateArguments, LearningPathModule, CodeAnalysisResult } from '../types';
 
 export interface GenerateContentParams {
@@ -335,7 +336,7 @@ const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'out
 };
 
 
-export const generateTextStream = async ({
+export const generateTextStream = async function* ({
   outputType,
   concept,
   purpose,
@@ -343,7 +344,7 @@ export const generateTextStream = async ({
   complexity,
   tone,
   context
-}: GenerateContentParams): Promise<AsyncGenerator<GenerateContentResponse>> => {
+}: GenerateContentParams): AsyncGenerator<GenerateContentResponse> {
   const userRequest = fillTemplate(PROMPT_TEMPLATES[outputType as keyof typeof PROMPT_TEMPLATES], { concept, purpose, language, complexity, tone });
   
   let finalPrompt = userRequest;
@@ -365,7 +366,9 @@ Please ensure your response is based primarily on the information given in the d
       contents: finalPrompt,
   });
 
-  return stream;
+  for await (const chunk of stream) {
+    yield chunk;
+  }
 };
 
 export const generateConceptMap = async ({
@@ -692,4 +695,29 @@ export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Pr
     });
     const jsonString = response.text.trim();
     return JSON.parse(jsonString);
+};
+
+// fix: Added chat functionality for TutorChatView
+let chat: Chat | null = null;
+
+export const startChat = () => {
+  chat = ai.chats.create({
+    model: 'gemini-2.5-flash',
+    config: {
+      systemInstruction: 'You are a friendly and knowledgeable AI Tutor. Your goal is to help users understand complex topics by providing clear, concise explanations and asking thought-provoking questions. Adapt your teaching style to the user\'s level of understanding.',
+    },
+  });
+};
+
+export const sendMessageToTutor = async function* (message: string): AsyncGenerator<GenerateContentResponse> {
+  if (!chat) {
+    startChat();
+  }
+  // This check is for typescript to be sure chat is not null.
+  if (!chat) throw new Error("Chat not initialized");
+
+  const stream = await chat.sendMessageStream({ message });
+  for await (const chunk of stream) {
+    yield chunk;
+  }
 };
