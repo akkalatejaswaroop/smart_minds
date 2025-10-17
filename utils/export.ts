@@ -1,3 +1,4 @@
+
 // Add jspdf and htmlToDocx to the window object for TypeScript
 declare global {
   interface Window {

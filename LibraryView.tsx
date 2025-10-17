@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BOOKS } from './constants/books';
 import type { Book, GeneratedContent } from './types';

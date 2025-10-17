@@ -1,300 +1,293 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { ContentDisplay } from './components/ContentDisplay';
-import type { OutputType, GeneratedContent } from './types';
-import { generateConceptMap, generateTextStream, generateQuiz } from './services/geminiService';
-import { useSpeechRecognition } from './hooks/useSpeechRecognition';
-import { MicrophoneIcon, UploadCloudIcon, XIcon } from './components/icons';
+import { generateTextStream, generateConceptMap, generateQuiz } from './services/geminiService';
+import ContentDisplay from './components/ContentDisplay';
+import { OutputType, GeneratedContent } from './types';
 import { extractTextFromFile } from './utils/fileReader';
+import { UploadCloudIcon, XIcon, FileTextIcon, BrainCircuitIcon, MicrophoneIcon } from './components/icons';
+import { LoadingSpinner } from './components/SummarizerComponents';
+import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 
-const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Mandarin', 'Telugu', 'Japanese', 'Korean', 'Russian'];
-const PURPOSES = [
-    'preparing for a college exam',
-    'understanding a new topic',
-    'reviewing for a quiz',
-    'getting a quick summary',
-    'teaching a class',
-    'creating study notes'
-];
+const COMPLEXITY_LEVELS = ['Simple', 'Intermediate', 'Difficult', 'Expert'];
+const TONE_OPTIONS = ['Friendly', 'Formal (Faculty)', 'Analogy-based', 'Simple (ELI5)'];
+const PURPOSE_OPTIONS = ['Preparation for Exam', 'Quick Revision', 'Understand a New Topic', 'Teach a Class', 'In-depth Knowledge', 'Create Study Notes'];
 
 const GeneratorView: React.FC = () => {
-  const [outputType, setOutputType] = useState<OutputType>('explanation');
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [purpose, setPurpose] = useState<string>('preparing for a college exam');
-  const [language, setLanguage] = useState<string>('English');
-  const [complexity, setComplexity] = useState<number>(2); // 1: Simple, 2: Intermediate, 3: Advanced, 4: Expert
-  const [conceptInput, setConceptInput] = useState('');
-  const [generatedForConcept, setGeneratedForConcept] = useState<string | undefined>(undefined);
+    const [generationMode, setGenerationMode] = useState<'concept' | 'document'>('concept');
+    const [concept, setConcept] = useState<string>('');
+    const [outputType, setOutputType] = useState<OutputType>('explanation');
+    const [purpose, setPurpose] = useState('Preparation for Exam');
+    const [language, setLanguage] = useState('English');
+    const [complexity, setComplexity] = useState('Intermediate');
+    const [tone, setTone] = useState('Friendly');
+    
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [fileContent, setFileContent] = useState<string | null>(null);
+    const [isFileReading, setIsFileReading] = useState(false);
+    const [fileError, setFileError] = useState<string | null>(null);
+    
+    const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-  const [generationMode, setGenerationMode] = useState<'topic' | 'document'>('topic');
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [fileContent, setFileContent] = useState<string | null>(null);
-  const [isFileReading, setIsFileReading] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
+    const {
+        transcript,
+        isListening,
+        startListening,
+        stopListening,
+    } = useSpeechRecognition();
 
-  const {
-    transcript,
-    isListening,
-    startListening,
-    stopListening,
-  } = useSpeechRecognition();
+    useEffect(() => {
+        if (transcript) {
+            setConcept(transcript);
+        }
+    }, [transcript]);
 
-  const complexityMap: { [key: number]: string } = { 1: 'Simple', 2: 'Intermediate', 3: 'Advanced', 4: 'Expert' };
-
-  useEffect(() => {
-    if (transcript) {
-      setConceptInput(transcript);
-    }
-  }, [transcript]);
-
-  const handleMicClick = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      setConceptInput(''); // Clear input before listening
-      startListening();
-    }
-  };
-  
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setUploadedFile(file);
-    setIsFileReading(true);
-    setFileError(null);
-    setFileContent(null);
-    setError(null);
-
-    try {
-        const text = await extractTextFromFile(file);
-        setFileContent(text);
-    } catch (err) {
-        setFileError(err instanceof Error ? err.message : 'Failed to read file.');
-        setUploadedFile(null);
-    } finally {
-        setIsFileReading(false);
-    }
-  };
-
-  const handleClearFile = () => {
-    setUploadedFile(null);
-    setFileContent(null);
-    setFileError(null);
-    const fileInput = document.getElementById('file-upload-generator') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
-  };
-
-  const handleGenerateContent = useCallback(async () => {
-    if (!conceptInput.trim()) {
-      setError('Please enter a concept to generate content.');
-      return;
-    }
-    if (generationMode === 'document' && !fileContent) {
-      setError('Please upload and wait for a document to be processed before generating content.');
-      return;
-    }
-
-    const concept = conceptInput.trim();
-    const subject = "a general academic context";
-
-    setIsLoading(true);
-    setError(null);
-    setGeneratedContent(null);
-    setGeneratedForConcept(concept);
-
-    const complexityLevel = complexityMap[complexity];
-
-    const params = {
-      outputType,
-      subject,
-      concept,
-      purpose,
-      language,
-      complexity: complexityLevel,
-      context: generationMode === 'document' ? fileContent : undefined,
+    const handleMicClick = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            setConcept(''); // Clear input before listening
+            startListening();
+        }
     };
 
-    try {
-      if (outputType === 'concept-map') {
-        const content = await generateConceptMap(params);
-        setGeneratedContent(content);
-      } else if (outputType === 'quiz') {
-        const content = await generateQuiz(params);
-        setGeneratedContent(content);
-      } else {
-        const stream = await generateTextStream(params);
-        let accumulatedText = "";
-        for await (const chunk of stream) {
-          accumulatedText += chunk.text;
-          setGeneratedContent({ text: accumulatedText });
+    const handleClearFile = () => {
+        setUploadedFile(null);
+        setFileContent(null);
+        setFileError(null);
+        const fileInput = document.getElementById('file-upload-generator') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+    };
+
+    const handleModeChange = (mode: 'concept' | 'document') => {
+        setGenerationMode(mode);
+        // Reset state for a clean switch
+        setConcept('');
+        setGeneratedContent(null);
+        setError(null);
+        if (mode === 'concept') {
+            handleClearFile();
         }
-      }
-    } catch (err) {
-      console.error(err);
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-      setError(`Failed to generate content. Please check your API key and try again. Details: ${errorMessage}`);
-      setGeneratedContent(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [conceptInput, outputType, purpose, language, complexity, generationMode, fileContent]);
-  
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !isLoading) {
-      handleGenerateContent();
-    }
-  };
-  
-  const isGenerateDisabled = isLoading || !conceptInput.trim() || (generationMode === 'document' && (!fileContent || isFileReading));
+    };
 
-  return (
-    <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
-        {/* Unified Controls Panel */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-sm p-4 mb-6 space-y-4">
-            <h3 className="text-lg font-semibold text-white">Generator Controls</h3>
-            
-            <div>
-                 <label className="text-sm font-medium text-slate-400 block mb-2">Generation Mode</label>
-                 <div className="flex items-center bg-slate-900 rounded-sm p-1 self-start">
-                    <button onClick={() => setGenerationMode('topic')} className={`px-4 py-1 text-sm rounded-sm ${generationMode === 'topic' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700'}`}>From Topic</button>
-                    <button onClick={() => setGenerationMode('document')} className={`px-4 py-1 text-sm rounded-sm ${generationMode === 'document' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700'}`}>From Document</button>
-                </div>
-            </div>
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
 
-            {generationMode === 'document' && (
-              <div>
-                  <label className="text-sm font-medium text-slate-400 block mb-2">Reference Document</label>
-                  {uploadedFile && !isFileReading ? (
-                     <div className="flex items-center justify-between bg-slate-900 p-3 rounded-sm">
-                        <p className="text-sm text-slate-300 truncate">Ready: {uploadedFile.name}</p>
-                        <button onClick={handleClearFile} className="p-1 text-slate-400 hover:text-white rounded-full"><XIcon className="w-4 h-4" /></button>
-                     </div>
-                  ) : (
-                    <label htmlFor="file-upload-generator" className="relative block w-full border-2 border-dashed border-slate-600 rounded-sm p-6 text-center cursor-pointer hover:border-cyan-500 transition-colors">
-                        <UploadCloudIcon className="mx-auto h-8 w-8 text-slate-500"/>
-                        <span className="mt-2 block text-sm font-semibold text-slate-300">
-                            {isFileReading ? 'Reading file...' : 'Click to upload PDF or DOCX'}
-                        </span>
-                        <input id="file-upload-generator" name="file-upload-generator" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.docx" disabled={isFileReading}/>
-                    </label>
-                  )}
-                  {fileError && <p className="text-red-400 text-sm mt-2">{fileError}</p>}
-              </div>
-            )}
+        setUploadedFile(file);
+        setIsFileReading(true);
+        setFileError(null);
+        setFileContent(null);
+        setGeneratedContent(null);
+        setError(null);
+        setConcept(''); // Clear concept when new file is uploaded
+
+        try {
+            const text = await extractTextFromFile(file);
+            setFileContent(text);
+        } catch (err) {
+            setFileError(err instanceof Error ? err.message : 'Failed to read file.');
+            setUploadedFile(null);
+        } finally {
+            setIsFileReading(false);
+        }
+    };
+
+    const handleGenerate = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        setGeneratedContent(null);
+        
+        try {
+            const contextForGeneration = generationMode === 'document' ? fileContent : null;
+            const params = { concept, outputType, purpose, language, complexity, tone, context: contextForGeneration };
             
-            <div>
-                <label htmlFor="concept-input" className="text-sm font-medium text-slate-400 block mb-2">
-                    {generationMode === 'document' ? 'Concept to Analyze in Document' : 'Enter Concept'}
-                </label>
-                <div className="relative">
-                    <input 
-                        id="concept-input" 
-                        type="text" 
-                        value={conceptInput} 
-                        onChange={e => setConceptInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={generationMode === 'document' ? "e.g., 'Supervised Learning'" : "e.g., 'Quantum Entanglement'"}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-sm py-2 pl-3 pr-10 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:bg-slate-900 disabled:cursor-not-allowed"
-                        disabled={isLoading}
-                    />
-                    <button onClick={handleMicClick} className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white disabled:opacity-50 ${isListening ? 'text-cyan-400 animate-pulse' : ''}`} aria-label="Use microphone to dictate concept" disabled={isLoading}>
-                      <MicrophoneIcon />
+            if (outputType === 'concept-map') {
+                const result = await generateConceptMap(params);
+                setGeneratedContent(result);
+            } else if (outputType === 'quiz') {
+                const result = await generateQuiz(params);
+                setGeneratedContent(result);
+            } else {
+                const stream = await generateTextStream(params);
+                let text = '';
+                setGeneratedContent({ text: '' }); // Initial empty state
+                for await (const chunk of stream) {
+                    text += chunk.text;
+                    setGeneratedContent({ text });
+                }
+            }
+        } catch (e: any) {
+            setError(`An error occurred: ${e.message}`);
+            console.error(e);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [concept, outputType, purpose, language, complexity, tone, fileContent, generationMode]);
+    
+    const complexityIndex = COMPLEXITY_LEVELS.indexOf(complexity);
+    const handleComplexityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setComplexity(COMPLEXITY_LEVELS[parseInt(e.target.value, 10)]);
+    };
+
+    const isGenerateDisabled = isLoading || isFileReading || !concept.trim() || (generationMode === 'document' && !fileContent);
+
+    return (
+        <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+                {/* Controls Column */}
+                <div className="lg:col-span-1 bg-slate-800/50 border border-slate-700/50 shadow-lg rounded-sm p-6 flex flex-col space-y-4">
+                    <h2 className="text-xl font-bold text-cyan-400 border-b border-slate-700/50 pb-2">Generation Options</h2>
+                    
+                    {/* Mode Switcher */}
+                    <div className="flex bg-slate-700/50 rounded-sm p-1">
+                        <button onClick={() => handleModeChange('concept')} className={`flex-1 px-3 py-2 text-sm font-medium rounded-sm transition-colors flex items-center justify-center gap-2 ${generationMode === 'concept' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
+                            From Concept
+                        </button>
+                        <button onClick={() => handleModeChange('document')} className={`flex-1 px-3 py-2 text-sm font-medium rounded-sm transition-colors flex items-center justify-center gap-2 ${generationMode === 'document' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
+                            From Document
+                        </button>
+                    </div>
+
+                    {/* Conditional Inputs */}
+                    {generationMode === 'concept' && (
+                        <div>
+                            <label htmlFor="concept" className="block text-sm font-medium text-slate-300">Concept / Question</label>
+                            <div className="relative mt-1">
+                                <input 
+                                    id="concept" 
+                                    type="text" 
+                                    value={concept} 
+                                    onChange={(e) => setConcept(e.target.value)}
+                                    placeholder="e.g., 'Quantum Entanglement'"
+                                    className="block w-full bg-slate-700 border-slate-600 rounded-sm shadow-sm py-2 px-3 pr-10 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-sm"
+                                />
+                                <button
+                                    onClick={handleMicClick}
+                                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-white ${isListening ? 'text-cyan-400 animate-pulse' : ''}`}
+                                    aria-label="Use microphone for concept"
+                                >
+                                    <MicrophoneIcon />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {generationMode === 'document' && (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Source Document</label>
+                                {!uploadedFile && !isFileReading ? (
+                                    <label htmlFor="file-upload-generator" className="relative block w-full border-2 border-dashed border-slate-600 rounded-sm p-6 text-center cursor-pointer hover:border-cyan-500 transition-colors">
+                                        <UploadCloudIcon className="mx-auto h-10 w-10 text-slate-500"/>
+                                        <span className="mt-2 block text-sm font-semibold text-slate-300">Upload a document</span>
+                                        <span className="mt-1 block text-xs text-slate-500">PDF or DOCX for context</span>
+                                        <input id="file-upload-generator" name="file-upload-generator" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.docx"/>
+                                    </label>
+                                ) : (
+                                    <div className="flex items-center justify-between bg-slate-700 px-3 py-2 rounded-sm text-sm">
+                                        <div className="flex items-center gap-2 text-slate-300 truncate">
+                                            {isFileReading ? <LoadingSpinner/> : <FileTextIcon className="w-4 h-4" />}
+                                            <span className="font-medium truncate">{isFileReading ? 'Reading file...' : uploadedFile?.name}</span>
+                                        </div>
+                                    {!isFileReading && <button onClick={handleClearFile} className="p-1 hover:bg-slate-600 rounded-full"><XIcon className="w-4 h-4" /></button>}
+                                    </div>
+                                )}
+                                {fileError && <p className="text-red-400 text-xs mt-1">{fileError}</p>}
+                            </div>
+                            <div>
+                                <label htmlFor="concept-doc" className="block text-sm font-medium text-slate-300">Question about Document</label>
+                                <div className="relative mt-1">
+                                    <input 
+                                        id="concept-doc" 
+                                        type="text" 
+                                        value={concept} 
+                                        onChange={(e) => setConcept(e.target.value)}
+                                        placeholder="Ask a question about the document..."
+                                        disabled={!fileContent || isFileReading}
+                                        className="block w-full bg-slate-700 border-slate-600 rounded-sm shadow-sm py-2 px-3 pr-10 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-sm disabled:bg-slate-800 disabled:cursor-not-allowed"
+                                    />
+                                    <button
+                                        onClick={handleMicClick}
+                                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-white ${isListening ? 'text-cyan-400 animate-pulse' : ''}`}
+                                        aria-label="Use microphone for question"
+                                        disabled={!fileContent || isFileReading}
+                                    >
+                                        <MicrophoneIcon />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div>
+                        <label htmlFor="outputType" className="block text-sm font-medium text-slate-300">Output Type</label>
+                        <select id="outputType" value={outputType} onChange={(e) => setOutputType(e.target.value as OutputType)} className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-sm shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-sm">
+                            <option value="explanation">Explanation</option>
+                            <option value="presentation">Presentation Script</option>
+                            <option value="examples">Examples</option>
+                            <option value="summary">Summary</option>
+                            <option value="concept-map">Concept Map</option>
+                            <option value="quiz">Quiz</option>
+                        </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="purpose" className="block text-sm font-medium text-slate-300">Purpose</label>
+                      <select id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-sm shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-sm">
+                        {PURPOSE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </div>
+
+                    {outputType === 'explanation' && (
+                      <div>
+                        <label htmlFor="tone" className="block text-sm font-medium text-slate-300">Explanation Tone</label>
+                        <select id="tone" value={tone} onChange={(e) => setTone(e.target.value)} className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-sm shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-sm">
+                          {TONE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <label htmlFor="language" className="block text-sm font-medium text-slate-300">Language</label>
+                      <select id="language" value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-sm shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-sm">
+                        <option>English</option>
+                        <option>Tenglish</option>
+                        <option>Spanish</option>
+                        <option>French</option>
+                        <option>German</option>
+                        <option>Hindi</option>
+                        <option>Mandarin</option>
+                        <option>Telugu</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="complexity" className="block text-sm font-medium text-slate-300">Complexity Level: <span className="font-bold text-cyan-400">{complexity}</span></label>
+                      <input id="complexity" type="range" min="0" max="3" value={complexityIndex} onChange={handleComplexityChange} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500 mt-2" />
+                    </div>
+
+                    <div className="flex-grow"></div>
+                    
+                    <button onClick={handleGenerate} disabled={isGenerateDisabled} className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-sm transition-colors duration-200 flex items-center justify-center gap-2">
+                         {isLoading ? <LoadingSpinner /> : <BrainCircuitIcon />}
+                        {isLoading ? 'Generating...' : 'Generate Content'}
                     </button>
                 </div>
-            </div>
-
-            <div>
-                 <label className="text-sm font-medium text-slate-400 block mb-2">Choose Output Type</label>
-                 <div className="flex items-center bg-slate-800/80 p-1 flex-wrap rounded-sm">
-                    {(['explanation', 'presentation', 'examples', 'summary', 'quiz', 'concept-map'] as const).map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setOutputType(type)}
-                            className={`px-3 py-2 text-sm font-medium rounded-sm transition-colors ${
-                                outputType === type ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'
-                            }`}
-                            aria-pressed={outputType === type}
-                        >
-                            {type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label htmlFor="complexity-slider" className="text-sm font-medium text-slate-400 block mb-2">
-                        Complexity: <span className="font-bold text-cyan-400">{complexityMap[complexity]}</span>
-                    </label>
-                    <input
-                        id="complexity-slider"
-                        type="range"
-                        min="1"
-                        max="4"
-                        step="1"
-                        value={complexity}
-                        onChange={e => setComplexity(Number(e.target.value))}
-                        className="w-full h-2 bg-slate-700 rounded-sm appearance-none cursor-pointer accent-cyan-500"
+                
+                <div className="lg:col-span-2 flex flex-col">
+                    <ContentDisplay 
+                        outputType={outputType}
+                        generatedContent={generatedContent}
+                        isLoading={isLoading && !generatedContent}
+                        error={error}
+                        conceptName={concept || (uploadedFile ? uploadedFile.name : '')}
+                        language={language}
                     />
                 </div>
-                {outputType !== 'concept-map' && outputType !== 'quiz' && (
-                  <div>
-                      <label className="text-sm font-medium text-slate-400 block mb-2">Purpose</label>
-                      <select
-                          value={purpose}
-                          onChange={(e) => setPurpose(e.target.value)}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                      >
-                          {PURPOSES.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-                      </select>
-                  </div>
-                )}
-                <div>
-                    <label className="text-sm font-medium text-slate-400 block mb-2">Language</label>
-                    <select 
-                        value={language} 
-                        onChange={e => setLanguage(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                    >
-                        {LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
-                    </select>
-                </div>
-            </div>
-
-            <div className="pt-2">
-                <button
-                    onClick={handleGenerateContent}
-                    disabled={isGenerateDisabled}
-                    className="w-full bg-cyan-600 text-white font-semibold px-5 py-2.5 rounded-sm hover:bg-cyan-500 transition-colors disabled:bg-cyan-900/50 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                    {isLoading ? (
-                    <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Generating...
-                    </>
-                    ) : (
-                    'Generate Content'
-                    )}
-                </button>
             </div>
         </div>
-
-        {/* Content Display Area */}
-        <ContentDisplay
-            outputType={outputType}
-            generatedContent={generatedContent}
-            isLoading={isLoading}
-            error={error}
-            conceptName={generatedForConcept}
-            language={language}
-        />
-    </div>
-  );
+    );
 };
 
 export default GeneratorView;

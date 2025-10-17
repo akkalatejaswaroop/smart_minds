@@ -51,23 +51,25 @@ export interface GeneratedContent {
     glossary?: GlossaryTerm[];
 }
 
-export interface Resource {
-  title: string;
-  url: string;
-  type: string;
-}
-
-// Types for new AI Tools
-export interface LearningPathModule {
-  moduleTitle: string;
-  description: string;
-  keyTopics: string[];
-  resources: Resource[];
-}
-
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
+}
+// FIX: Add missing type definitions.
+export interface DebateArguments {
+    pro: string[];
+    con: string[];
+}
+
+export interface LearningPathModule {
+    moduleTitle: string;
+    description: string;
+    keyTopics: string[];
+    resources?: {
+        title: string;
+        url: string;
+        type: string;
+    }[];
 }
 
 export interface CodeExplanation {
@@ -90,10 +92,3 @@ export interface CodeDebugReport {
 }
 
 export type CodeAnalysisResult = CodeExplanation | CodeDebugReport;
-
-
-// FIX: Add DebateArguments interface to be used in DebateGeneratorView.
-export interface DebateArguments {
-  pro: string[];
-  con: string[];
-}

@@ -1,3 +1,4 @@
+
 // Add mermaid to the window object for TypeScript
 declare global {
   interface Window {

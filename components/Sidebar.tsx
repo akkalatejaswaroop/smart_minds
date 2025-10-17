@@ -1,5 +1,5 @@
 import React from 'react';
-import { XIcon, MicrophoneIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon, ScaleIcon, MapIcon, MessageSquareIcon, CodeIcon, DownloadIcon } from './icons';
+import { XIcon, BookOpenIcon, BrainCircuitIcon, FileTextIcon, MessageSquareIcon, DownloadIcon } from './icons';
 import type { AppView } from '../App';
 
 interface SidebarProps {
@@ -62,21 +62,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         <div className="p-4 border-b border-slate-700/50">
            <h3 className="text-sm font-semibold text-slate-400 mb-2 font-mono uppercase tracking-wider">AI Tools</h3>
            <div className="space-y-2">
-              <button onClick={() => handleSetView('learning-path')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'learning-path' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
-                  <MapIcon />
-                  <span>Learning Path Creator</span>
-              </button>
               <button onClick={() => handleSetView('tutor-chat')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'tutor-chat' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
                   <MessageSquareIcon />
                   <span>AI Tutor Chat</span>
-              </button>
-              <button onClick={() => handleSetView('code-explainer')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'code-explainer' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
-                  <CodeIcon />
-                  <span>Code Explainer</span>
-              </button>
-              <button onClick={() => handleSetView('debate-generator')} className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-sm text-sm font-medium transition-colors ${currentView === 'debate-generator' ? 'bg-cyan-600 text-white' : 'hover:bg-slate-700/50'}`}>
-                  <ScaleIcon />
-                  <span>AI Debate Generator</span>
               </button>
            </div>
         </div>
@@ -108,17 +96,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           {currentView === 'book-summarizer' && (
               <p className="text-xs text-slate-500">Analyze any book by its title or upload a document (PDF, DOCX) to get summaries, concept maps, quizzes, and more.</p>
           )}
-          {currentView === 'learning-path' && (
-              <p className="text-xs text-slate-500">Define a learning goal, and the AI will create a customized, step-by-step learning path to guide your studies.</p>
-          )}
           {currentView === 'tutor-chat' && (
               <p className="text-xs text-slate-500">Have a real-time conversation with an AI tutor. Ask questions and get clear explanations on any academic subject.</p>
-          )}
-          {currentView === 'code-explainer' && (
-              <p className="text-xs text-slate-500">Paste a code snippet to get a detailed explanation of how it works or to find and fix potential bugs.</p>
-          )}
-           {currentView === 'debate-generator' && (
-              <p className="text-xs text-slate-500">Enter a topic to generate compelling arguments for both sides, helping you practice critical thinking.</p>
           )}
         </div>
 

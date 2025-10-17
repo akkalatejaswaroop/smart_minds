@@ -1,14 +1,14 @@
+// FIX: Import new types to support added features.
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-// FIX: Import DebateArguments type to support the new debate generation feature.
-import type { OutputType, GeneratedContent, Book, LearningPathModule, DebateArguments, CodeAnalysisResult } from '../types';
+import type { OutputType, GeneratedContent, Book, DebateArguments, LearningPathModule, CodeAnalysisResult } from '../types';
 
 export interface GenerateContentParams {
   outputType: OutputType;
-  subject: string;
   concept: string;
   purpose: string;
   language: string;
   complexity: string;
+  tone?: string;
   context?: string;
 }
 
@@ -36,15 +36,18 @@ const model = 'gemini-2.5-flash';
 
 const PROMPT_TEMPLATES = {
   explanation: `
-Generate a concise explanation for the concept '{concept}' within the subject '{subject}'. 
-The target audience is a student '{purpose}'.
-The explanation should be clear, easy to understand, tailored for a '{complexity}' level of understanding, and focused, similar in length and detail to a '5-mark' answer in an exam. Avoid unnecessary jargon or overly deep dives.
+Generate a concise explanation for the concept '{concept}'. 
+The explanation should be specifically tailored for a user whose purpose is '{purpose}'.
+The explanation should be clear, easy to understand, at a '{complexity}' level, and focused, similar in length and detail to a '5-mark' answer in an exam. 
+The tone of the explanation should be '{tone}'. 
+Avoid unnecessary jargon or overly deep dives unless the purpose is 'In-depth Knowledge'.
 Respond in {language}.
 
 Format the response using simple Markdown. Use a main heading for the concept, followed by bullet points or short paragraphs for the key points.
 `,
   presentation: `
-Generate a professional presentation script for the concept '{concept}' from '{subject}'.
+Generate a professional presentation script for the concept '{concept}'.
+The presentation should be designed to help someone with the goal of '{purpose}'.
 The script should be structured slide-by-slide, with clear headings and speaker notes, tailored to a '{complexity}' level of understanding.
 Respond in {language}.
 
@@ -52,7 +55,7 @@ Use the following Markdown format:
 
 ## Slide 1: Title Slide
 - **Title:** {concept}
-- **Subtitle:** A deep dive into {subject}
+- **Subtitle:** A presentation for the purpose of: {purpose}
 - **Presenter:** SMART MINDS AI
 
 ## Slide 2: Agenda
@@ -63,17 +66,17 @@ Use the following Markdown format:
 - Q&A
 
 ## Slide 3: Introduction
-- **Speaker Notes:** (Start with a hook to grab the audience's attention. Briefly explain what {concept} is and why it's important in the context of {subject}.)
+- **Speaker Notes:** (Start with a hook to grab the audience's attention. Briefly explain what {concept} is and why it's important for '{purpose}'.)
 
-(Continue generating slides for Core Principles, Examples, and Summary, each with clear speaker notes.)
+(Continue generating slides for Core Principles, Examples, and Summary, each with clear speaker notes tailored to the purpose.)
 
 ## Slide 6: Conclusion & Q&A
 - **Speaker Notes:** (Summarize the key takeaways. Thank the audience and open the floor for questions.)
 `,
   examples: `
-Provide two distinct and well-explained examples for the concept '{concept}' ({subject}).
-The examples should be suitable for a '{complexity}' level of understanding.
-Start with a brief introduction about why examples are crucial for mastering this topic.
+Provide two distinct and well-explained examples for the concept '{concept}'.
+The examples should be suitable for a user whose goal is '{purpose}' and for a '{complexity}' level of understanding.
+Start with a brief introduction about why examples are crucial for mastering this topic, especially for the user's purpose.
 Respond in {language}.
 
 Use the following Markdown format:
@@ -92,11 +95,11 @@ Use the following Markdown format:
 - **Outcome:** (Describe the result, making the connection back to the core concept clear.)
 
 ### Summary of Examples
-(Briefly conclude by highlighting the key differences and insights from both examples.)
+(Briefly conclude by highlighting how these examples help with the user's purpose of '{purpose}'.)
 `,
   summary: `
-Generate a concise, easy-to-digest summary for the concept '{concept}' within the subject '{subject}'.
-The target audience is a student '{purpose}'. The summary's complexity should be '{complexity}'.
+Generate a concise, easy-to-digest summary for the concept '{concept}'.
+The summary should be created for a user whose purpose is '{purpose}'. The summary's complexity should be '{complexity}'.
 The tone should be clear and direct.
 Respond in {language}.
 
@@ -107,7 +110,7 @@ Format the response as a well-structured bulleted list using Markdown.
 `
 };
 
-const CONCEPT_MAP_PROMPT = `Generate a concept map for '{concept}' ({subject}'). The summary and map should be tailored to a '{complexity}' level of understanding.
+const CONCEPT_MAP_PROMPT = `Generate a concept map for '{concept}'. The summary and map should be tailored for a user whose purpose is '{purpose}' and for a '{complexity}' level of understanding.
 1.  **Summary:** Provide a short, concise summary of the concept (under 100 words).
 2.  **Mermaid Code:** Provide the concept map in Mermaid.js flowchart syntax (using \`graph TD;\`). The map must visually explain the key ideas and their relationships.
     - IMPORTANT: Enclose all node text in double quotes to prevent syntax errors with special characters (e.g., A["Node Text with (parentheses)"]).
@@ -129,7 +132,7 @@ const CONCEPT_MAP_SCHEMA = {
   required: ["summary", "mermaidCode"],
 };
 
-const QUIZ_PROMPT = `Generate an interactive multiple-choice quiz with 3 questions for the concept '{concept}' ({subject}). The difficulty of the questions should be at a '{complexity}' level. For each question, provide 4 options, indicate the correct answer, and give a brief explanation for why the answer is correct. Respond ONLY with a valid JSON object containing a single key "quiz", which holds an array of question objects. Do not include markdown formatting like \`\`\`json. Respond in {language}.`;
+const QUIZ_PROMPT = `Generate an interactive multiple-choice quiz with 3 questions for the concept '{concept}'. The difficulty should be at a '{complexity}' level, suitable for a user whose purpose is '{purpose}'. For each question, provide 4 options, indicate the correct answer, and give a brief explanation for why the answer is correct. Respond ONLY with a valid JSON object containing a single key "quiz", which holds an array of question objects. Do not include markdown formatting like \`\`\`json. Respond in {language}.`;
 
 const QUIZ_SCHEMA = {
   type: Type.OBJECT,
@@ -214,65 +217,80 @@ const GLOSSARY_SCHEMA = {
   required: ['glossary'],
 };
 
-const LEARNING_PATH_SCHEMA = {
-    type: Type.OBJECT,
-    properties: {
-        path: {
-            type: Type.ARRAY,
-            description: "An array of learning module objects.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    moduleTitle: { type: Type.STRING, description: "The title of the learning module." },
-                    description: { type: Type.STRING, description: "A concise description of what to learn in this module." },
-                    keyTopics: { 
-                        type: Type.ARRAY, 
-                        description: "A list of key topics to cover in this module.",
-                        items: { type: Type.STRING } 
-                    },
-                    resources: {
-                        type: Type.ARRAY,
-                        description: "A list of 2-3 free online learning resources for this module.",
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                title: { type: Type.STRING, description: "The title of the resource." },
-                                url: { type: Type.STRING, description: "The direct URL to the resource." },
-                                type: { type: Type.STRING, description: "The type of resource (e.g., 'Video', 'Article', 'Interactive Tutorial', 'Documentation')." }
-                            },
-                            required: ["title", "url", "type"]
-                        }
-                    }
-                },
-                required: ["moduleTitle", "description", "keyTopics", "resources"]
-            }
-        }
+// FIX: Add schemas for new features: Debate, Learning Path, and Code Analysis.
+const DEBATE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    pro: {
+      type: Type.ARRAY,
+      description: "A list of arguments for the topic.",
+      items: { type: Type.STRING }
     },
-    required: ["path"]
+    con: {
+      type: Type.ARRAY,
+      description: "A list of arguments against the topic.",
+      items: { type: Type.STRING }
+    }
+  },
+  required: ["pro", "con"]
+};
+
+const LEARNING_PATH_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    path: {
+      type: Type.ARRAY,
+      description: "An array of learning modules.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          moduleTitle: { type: Type.STRING, description: "The title of the learning module." },
+          description: { type: Type.STRING, description: "A brief description of what the module covers." },
+          keyTopics: {
+            type: Type.ARRAY,
+            description: "A list of key topics to cover in this module.",
+            items: { type: Type.STRING }
+          },
+          resources: {
+            type: Type.ARRAY,
+            description: "A list of recommended learning resources.",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING, description: "The title of the resource." },
+                url: { type: Type.STRING, description: "The URL to the resource." },
+                type: { type: Type.STRING, description: "The type of resource (e.g., Video, Article, Documentation, Course)." }
+              },
+              required: ["title", "url", "type"]
+            }
+          }
+        },
+        required: ["moduleTitle", "description", "keyTopics"]
+      }
+    }
+  },
+  required: ["path"]
 };
 
 const CODE_EXPLANATION_SCHEMA = {
   type: Type.OBJECT,
   properties: {
-    summary: {
-      type: Type.STRING,
-      description: "A high-level summary of the code's purpose and functionality."
-    },
+    summary: { type: Type.STRING, description: "A high-level summary of what the code does." },
     lineByLineExplanation: {
       type: Type.ARRAY,
-      description: "A detailed, line-by-line or block-by-block explanation of the code.",
+      description: "A line-by-line or block-by-block explanation of the code.",
       items: {
         type: Type.OBJECT,
         properties: {
-          lines: { type: Type.STRING, description: "The line range or specific line being explained (e.g., 'Lines 1-3', 'Line 5')." },
-          explanation: { type: Type.STRING, description: "The detailed explanation for that specific line or block of code." }
+          lines: { type: Type.STRING, description: "The line number(s) this explanation refers to (e.g., '1-3')." },
+          explanation: { type: Type.STRING, description: "The explanation for this line or block of code." }
         },
         required: ["lines", "explanation"]
       }
     },
     keyConcepts: {
       type: Type.ARRAY,
-      description: "A list of key programming concepts, algorithms, or patterns used in the code.",
+      description: "A list of key programming concepts demonstrated in the code.",
       items: { type: Type.STRING }
     }
   },
@@ -282,50 +300,51 @@ const CODE_EXPLANATION_SCHEMA = {
 const CODE_DEBUG_SCHEMA = {
   type: Type.OBJECT,
   properties: {
-    analysisSummary: {
-      type: Type.STRING,
-      description: "A high-level summary of the findings (e.g., 'No bugs found, but optimizations are possible', 'One critical bug identified')."
-    },
+    analysisSummary: { type: Type.STRING, description: "A summary of the code's functionality and any issues found." },
     bugs: {
       type: Type.ARRAY,
-      description: "A list of identified bugs or potential issues.",
+      description: "A list of identified bugs or potential issues in the code.",
       items: {
         type: Type.OBJECT,
         properties: {
-          line: { type: Type.STRING, description: "The line number or range where the bug is located." },
-          issue: { type: Type.STRING, description: "A clear description of the bug or issue." },
-          suggestion: { type: Type.STRING, description: "A suggested fix or improvement." }
+          line: { type: Type.STRING, description: "The line number where the bug is located." },
+          issue: { type: Type.STRING, description: "A description of the bug or potential issue." },
+          suggestion: { type: Type.STRING, description: "A suggestion on how to fix the issue." }
         },
         required: ["line", "issue", "suggestion"]
       }
     },
-    correctedCode: {
-      type: Type.STRING,
-      description: "The full code snippet with all identified issues corrected. If no bugs are found, this can be the original code or an optimized version."
-    }
+    correctedCode: { type: Type.STRING, description: "The complete, corrected version of the code snippet." }
   },
   required: ["analysisSummary", "bugs", "correctedCode"]
 };
 
 
-const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'outputType' | 'context'>) => 
-  template.replace(/{concept}/g, params.concept)
-          .replace(/{subject}/g, params.subject)
-          .replace(/{purpose}/g, params.purpose)
-          .replace(/{language}/g, params.language)
-          .replace(/{complexity}/g, params.complexity);
+const fillTemplate = (template: string, params: Omit<GenerateContentParams, 'outputType' | 'context'>) => {
+  let languageInstruction = params.language;
+  if (params.language === 'Tenglish') {
+    // Provide a clear definition of "Tenglish" for the model to prevent confusion with Hindi.
+    languageInstruction = 'Tenglish (which is the Telugu language written in the English alphabet, commonly used for text messaging)';
+  }
+
+  return template.replace(/{concept}/g, params.concept)
+                 .replace(/{purpose}/g, params.purpose)
+                 .replace(/{language}/g, languageInstruction)
+                 .replace(/{complexity}/g, params.complexity)
+                 .replace(/{tone}/g, params.tone || 'neutral');
+};
 
 
 export const generateTextStream = async ({
   outputType,
-  subject,
   concept,
   purpose,
   language,
   complexity,
+  tone,
   context
 }: GenerateContentParams): Promise<AsyncGenerator<GenerateContentResponse>> => {
-  const userRequest = fillTemplate(PROMPT_TEMPLATES[outputType as keyof typeof PROMPT_TEMPLATES], { subject, concept, purpose, language, complexity });
+  const userRequest = fillTemplate(PROMPT_TEMPLATES[outputType as keyof typeof PROMPT_TEMPLATES], { concept, purpose, language, complexity, tone });
   
   let finalPrompt = userRequest;
   if (context) {
@@ -350,14 +369,14 @@ Please ensure your response is based primarily on the information given in the d
 };
 
 export const generateConceptMap = async ({
-  subject,
   concept,
   purpose,
   language,
   complexity,
-  context
+  context,
+  tone
 }: GenerateContentParams): Promise<GeneratedContent> => {
-  const userRequest = fillTemplate(CONCEPT_MAP_PROMPT, { subject, concept, purpose, language, complexity });
+  const userRequest = fillTemplate(CONCEPT_MAP_PROMPT, { concept, purpose, language, complexity, tone });
 
   let finalPrompt = userRequest;
   if (context) {
@@ -386,14 +405,14 @@ Please ensure your response is based primarily on the information given in the d
 };
 
 export const generateQuiz = async ({
-  subject,
   concept,
   purpose,
   language,
   complexity,
-  context
+  context,
+  tone
 }: GenerateContentParams): Promise<GeneratedContent> => {
-  const userRequest = fillTemplate(QUIZ_PROMPT, { subject, concept, purpose, language, complexity });
+  const userRequest = fillTemplate(QUIZ_PROMPT, { concept, purpose, language, complexity, tone });
   
   let finalPrompt = userRequest;
   if (context) {
@@ -603,40 +622,12 @@ export const generateRecommendations = async (currentBook: Book, allBooks: Book[
     }
 };
 
-export const generateLearningPath = async (goal: string): Promise<LearningPathModule[]> => {
-    const prompt = `Create a detailed, step-by-step learning path for a beginner wanting to achieve the goal: '${goal}'. The path should consist of several modules. For each module, provide a title, a concise description of what to learn, a list of key topics to cover, and a list of 2-3 high-quality, free online learning resources (like YouTube videos, articles, interactive tutorials, or official documentation) that would help a user learn the topics in that module. For each resource, provide a title, a valid URL, and its type. Respond ONLY with a valid JSON object containing a 'path' key, which is an array of module objects.`;
-    const response = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: LEARNING_PATH_SCHEMA,
-        },
-    });
-    const { path } = JSON.parse(response.text.trim());
-    return path;
-};
-
-// FIX: Add generateDebateArguments function and its associated schema.
-const DEBATE_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    pro: {
-      type: Type.ARRAY,
-      description: "A list of 3 compelling arguments for the topic.",
-      items: { type: Type.STRING }
-    },
-    con: {
-      type: Type.ARRAY,
-      description: "A list of 3 compelling arguments against the topic.",
-      items: { type: Type.STRING }
-    }
-  },
-  required: ["pro", "con"]
-};
-
+// FIX: Implement missing functions generateDebateArguments, generateLearningPath, and analyzeCode.
 export const generateDebateArguments = async (topic: string): Promise<DebateArguments> => {
-    const prompt = `Generate a balanced set of 3 compelling arguments for (pro) and 3 arguments against (con) the following debate topic: '${topic}'. Respond ONLY with a valid JSON object. Do not include markdown formatting.`;
+    const prompt = `Generate 3 distinct and well-reasoned arguments for (pro) and 3 against (con) the following debate topic: "${topic}".
+    The arguments should be concise and suitable for a high-school level debate.
+    Respond ONLY with a valid JSON object matching the specified schema. Do not include markdown formatting.`;
+
     const response = await ai.models.generateContent({
         model,
         contents: prompt,
@@ -649,15 +640,30 @@ export const generateDebateArguments = async (topic: string): Promise<DebateArgu
     return JSON.parse(jsonString);
 };
 
+export const generateLearningPath = async (goal: string): Promise<LearningPathModule[]> => {
+    const prompt = `Create a detailed, step-by-step learning path for the following goal: "${goal}".
+    The path should consist of several modules. Each module should have a title, a short description, a list of key topics to learn, and a list of 2-3 high-quality online resources (like articles, videos, or documentation) with their titles, URLs, and types.
+    Respond ONLY with a valid JSON object with a single key "path" which holds an array of module objects. Do not include markdown formatting.`;
+
+    const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: LEARNING_PATH_SCHEMA,
+        },
+    });
+    const jsonString = response.text.trim();
+    const result = JSON.parse(jsonString);
+    return result.path;
+};
+
 export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Promise<CodeAnalysisResult> => {
     let prompt: string;
     let schema: object;
 
     if (action === 'explain') {
-        prompt = `You are an expert code explainer. Analyze the following code snippet and provide a structured explanation.
-        - Start with a high-level summary.
-        - Provide a detailed line-by-line or block-by-block breakdown.
-        - Identify key programming concepts used.
+        prompt = `Analyze and explain the following code snippet. Provide a summary, a line-by-line breakdown, and identify key programming concepts.
         Respond ONLY with a valid JSON object matching the specified schema.
 
         Code:
@@ -666,11 +672,7 @@ export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Pr
         \`\`\``;
         schema = CODE_EXPLANATION_SCHEMA;
     } else { // action === 'debug'
-        prompt = `You are an expert code debugger. Analyze the following code snippet for bugs, errors, and improvements.
-        - Provide a summary of your findings.
-        - List each identified bug with its location and a suggested fix.
-        - Provide the fully corrected code.
-        If no bugs are found, state that and suggest potential optimizations.
+        prompt = `Analyze the following code snippet to find and fix bugs. Provide a summary of the issues, a list of specific bugs with suggestions, and the fully corrected code. If no bugs are found, state that in the summary and return the original code.
         Respond ONLY with a valid JSON object matching the specified schema.
 
         Code:
@@ -679,7 +681,7 @@ export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Pr
         \`\`\``;
         schema = CODE_DEBUG_SCHEMA;
     }
-    
+
     const response = await ai.models.generateContent({
         model,
         contents: prompt,
@@ -688,7 +690,6 @@ export const analyzeCode = async (code: string, action: 'explain' | 'debug'): Pr
             responseSchema: schema,
         },
     });
-    
     const jsonString = response.text.trim();
     return JSON.parse(jsonString);
 };

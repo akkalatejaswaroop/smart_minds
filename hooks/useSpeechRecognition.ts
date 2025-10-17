@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Define more specific types for Web Speech API events to avoid using `any`
 interface SpeechRecognitionEvent {
@@ -37,66 +37,59 @@ declare global {
     }
 }
 
-let recognition: SpeechRecognition | null = null;
-if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-}
+const browserSupportsSpeechRecognition = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
 export const useSpeechRecognition = () => {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-    const startListening = useCallback(() => {
-        if (!recognition) {
+    // This effect runs only once on mount to create the instance and handle cleanup
+    useEffect(() => {
+        if (!browserSupportsSpeechRecognition) {
             setError("Speech recognition is not supported in this browser.");
             return;
         }
-        if (isListening) return;
+
+        const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognitionApi();
+        const recognition = recognitionRef.current;
         
-        recognition.start();
-
-        recognition.onstart = () => {
-            setIsListening(true);
-            setTranscript('');
-            setError(null);
-        };
-
-        recognition.onresult = (event) => {
-            const currentTranscript = event.results[0][0].transcript;
-            setTranscript(currentTranscript);
-        };
-
+        // Assign handlers here. They will be stable because the setters from useState are stable.
+        recognition.onstart = () => setIsListening(true);
+        recognition.onresult = (event) => setTranscript(event.results[0][0].transcript);
         recognition.onerror = (event) => {
             console.error('Speech recognition error', event.error);
             setError(`Speech recognition error: ${event.error}`);
             setIsListening(false);
         };
+        recognition.onend = () => setIsListening(false);
 
-        recognition.onend = () => {
-            setIsListening(false);
+        return () => {
+            recognition.abort();
         };
+    }, []); // Empty deps - runs once.
+
+    const startListening = useCallback(() => {
+        const recognition = recognitionRef.current;
+        if (recognition && !isListening) {
+            setTranscript(''); // Reset transcript on start
+            setError(null);
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.start();
+        }
     }, [isListening]);
 
     const stopListening = useCallback(() => {
-        if (!recognition || !isListening) return;
-        recognition.stop();
-        setIsListening(false);
+        const recognition = recognitionRef.current;
+        if (recognition && isListening) {
+            recognition.stop();
+        }
     }, [isListening]);
-    
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (recognition) {
-                recognition.abort();
-            }
-        };
-    }, []);
 
     return {
         isListening,
@@ -104,6 +97,6 @@ export const useSpeechRecognition = () => {
         error,
         startListening,
         stopListening,
-        browserSupportsSpeechRecognition: recognition !== null
+        browserSupportsSpeechRecognition,
     };
 };

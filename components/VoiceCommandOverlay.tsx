@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MicrophoneIcon, XIcon } from './icons';
 
@@ -38,7 +39,7 @@ export const VoiceCommandOverlay: React.FC<VoiceCommandOverlayProps> = ({ isOpen
           {isListening ? "Listening..." : "Preparing..."}
         </h2>
         <p className="mt-2 text-slate-400">
-          Try saying: "Open content generator", "Start a debate", or "Go to the digital library".
+          Try saying: "Open content generator", "Chat with tutor", or "Go to the digital library".
         </p>
       </div>
       <style>{`
