@@ -83,3 +83,33 @@ export interface CodeDebugReport {
 }
 
 export type CodeAnalysisResult = CodeExplanation | CodeDebugReport;
+
+// fix: Added missing ChatMessage type for the TutorChatView.
+export interface ChatMessage {
+    role: 'user' | 'model';
+    content: string;
+    isStreaming?: boolean;
+}
+
+export interface GroundingChunk {
+  web?: {
+    uri: string;
+    title: string;
+  };
+  [key: string]: any; // Allow for other grounding types
+}
+
+export interface GroundingSource {
+    uri: string;
+    title: string;
+}
+
+export interface RelatedResources {
+    markdownContent: string;
+    sources: GroundingSource[];
+}
+
+export interface RelatedResourcesResult {
+    markdownContent: string;
+    sources: GroundingChunk[];
+}

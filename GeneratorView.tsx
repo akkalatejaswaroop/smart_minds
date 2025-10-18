@@ -1,11 +1,65 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { generateTextStream, generateConceptMap, generateQuiz } from './services/geminiService';
+import { generateTextStream, generateConceptMap, generateQuiz, fetchRelatedResources } from './services/geminiService';
 import ContentDisplay from './components/ContentDisplay';
-import { OutputType, GeneratedContent } from './types';
+import { OutputType, GeneratedContent, RelatedResources, GroundingSource, GroundingChunk } from './types';
 import { extractTextFromFile } from './utils/fileReader';
-import { UploadCloudIcon, XIcon, FileTextIcon, BrainCircuitIcon, MicrophoneIcon } from './components/icons';
+import { UploadCloudIcon, XIcon, FileTextIcon, BrainCircuitIcon, MicrophoneIcon, ExternalLinkIcon } from './components/icons';
 import { LoadingSpinner } from './components/SummarizerComponents';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
+import { renderSimpleMarkdown } from './utils/markdown';
+
+const RelatedResourcesDisplay: React.FC<{
+    isLoading: boolean;
+    resources: RelatedResources | null;
+}> = ({ isLoading, resources }) => {
+    if (isLoading) {
+        return (
+            <div className="mt-6 bg-slate-800/50 border border-slate-700/50 rounded-sm p-6">
+                <div className="flex items-center gap-2 text-slate-400">
+                    <LoadingSpinner />
+                    <span>Fetching related resources...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!resources || (!resources.markdownContent && resources.sources.length === 0)) {
+        return null;
+    }
+    
+    const style = `
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+    `;
+
+    return (
+        <div className="mt-6 bg-slate-800/50 border border-slate-700/50 rounded-sm p-6 animate-fade-in">
+            <style>{style}</style>
+            <h3 className="text-xl font-bold text-cyan-400 mb-4">Explore Further</h3>
+            <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(resources.markdownContent) }} />
+            
+            {resources.sources.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-slate-700/50">
+                    <h4 className="font-semibold text-slate-300 mb-2">Sources:</h4>
+                    <ul className="text-sm space-y-2">
+                        {resources.sources.map((source, index) => (
+                            <li key={index}>
+                                <a href={source.uri} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 hover:underline">
+                                    <span>{source.title || source.uri}</span>
+                                    <ExternalLinkIcon className="w-4 h-4 flex-shrink-0" />
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 const COMPLEXITY_LEVELS = ['Simple', 'Intermediate', 'Difficult', 'Expert'];
 const TONE_OPTIONS = ['Friendly', 'Formal (Faculty)', 'Analogy-based', 'Simple (ELI5)'];
@@ -28,6 +82,9 @@ const GeneratorView: React.FC = () => {
     const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    
+    const [relatedResources, setRelatedResources] = useState<RelatedResources | null>(null);
+    const [isFetchingResources, setIsFetchingResources] = useState(false);
 
     const {
         transcript,
@@ -41,6 +98,28 @@ const GeneratorView: React.FC = () => {
             setConcept(transcript);
         }
     }, [transcript]);
+
+    useEffect(() => {
+        if (generatedContent && !isLoading && concept && (outputType !== 'quiz' && outputType !== 'concept-map')) {
+            const getResources = async () => {
+                setIsFetchingResources(true);
+                setRelatedResources(null);
+                try {
+                    const result = await fetchRelatedResources(concept);
+                    const sources: GroundingSource[] = result.sources
+                        .map(chunk => chunk.web)
+                        .filter((source): source is { uri: string; title: string } => !!source);
+
+                    setRelatedResources({ markdownContent: result.markdownContent, sources });
+                } catch (e) {
+                    console.error("Failed to fetch related resources:", e);
+                } finally {
+                    setIsFetchingResources(false);
+                }
+            };
+            getResources();
+        }
+    }, [generatedContent, isLoading, concept, outputType]);
 
     const handleMicClick = () => {
         if (isListening) {
@@ -65,6 +144,7 @@ const GeneratorView: React.FC = () => {
         setConcept('');
         setGeneratedContent(null);
         setError(null);
+        setRelatedResources(null);
         if (mode === 'concept') {
             handleClearFile();
         }
@@ -79,6 +159,7 @@ const GeneratorView: React.FC = () => {
         setFileError(null);
         setFileContent(null);
         setGeneratedContent(null);
+        setRelatedResources(null);
         setError(null);
         setConcept(''); // Clear concept when new file is uploaded
 
@@ -97,6 +178,7 @@ const GeneratorView: React.FC = () => {
         setIsLoading(true);
         setError(null);
         setGeneratedContent(null);
+        setRelatedResources(null);
         
         try {
             const contextForGeneration = generationMode === 'document' ? fileContent : null;
@@ -283,6 +365,10 @@ const GeneratorView: React.FC = () => {
                         error={error}
                         conceptName={concept || (uploadedFile ? uploadedFile.name : '')}
                         language={language}
+                    />
+                    <RelatedResourcesDisplay
+                        isLoading={isFetchingResources}
+                        resources={relatedResources}
                     />
                 </div>
             </div>

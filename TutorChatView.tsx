@@ -5,13 +5,8 @@ import { renderSimpleMarkdown } from './utils/markdown';
 import { LoadingSpinner } from './components/SummarizerComponents';
 import { MicrophoneIcon } from './components/icons';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
-import type { ChatMessage as ChatMessageType } from './types'; // Assuming ChatMessage is defined in types.ts
-
-interface ChatMessage {
-    role: 'user' | 'model';
-    content: string;
-    isStreaming?: boolean;
-}
+// fix: Correctly import the ChatMessage type from `types.ts` where it is now defined.
+import type { ChatMessage } from './types';
 
 const TutorChatView: React.FC = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -71,6 +66,7 @@ const TutorChatView: React.FC = () => {
             
             // Finalize the message
             setMessages(prev => {
+                // fix: Corrected the variable name from `newMessages` to `prev` to avoid using a variable before declaration.
                 const newMessages = [...prev];
                 const lastMessage = newMessages[newMessages.length - 1];
                 if (lastMessage && lastMessage.role === 'model') {

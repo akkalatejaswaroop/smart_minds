@@ -1,7 +1,7 @@
 // FIX: Import new types to support added features.
 // fix: Added Chat to the import from @google/genai.
 import { GoogleGenAI, Type, GenerateContentResponse, Chat } from "@google/genai";
-import type { OutputType, GeneratedContent, Book, DebateArguments, LearningPathModule, CodeAnalysisResult } from '../types';
+import type { OutputType, GeneratedContent, Book, DebateArguments, LearningPathModule, CodeAnalysisResult, RelatedResourcesResult, GroundingChunk } from '../types';
 
 export interface GenerateContentParams {
   outputType: OutputType;
@@ -37,14 +37,35 @@ const model = 'gemini-2.5-flash';
 
 const PROMPT_TEMPLATES = {
   explanation: `
-Generate a concise explanation for the concept '{concept}'. 
-The explanation should be specifically tailored for a user whose purpose is '{purpose}'.
-The explanation should be clear, easy to understand, at a '{complexity}' level, and focused, similar in length and detail to a '5-mark' answer in an exam. 
-The tone of the explanation should be '{tone}'. 
-Avoid unnecessary jargon or overly deep dives unless the purpose is 'In-depth Knowledge'.
+Generate a detailed and well-structured explanation for the concept '{concept}'.
+The explanation should be tailored for a user whose purpose is '{purpose}' and at a '{complexity}' level of understanding.
+The tone of the explanation should be '{tone}'.
 Respond in {language}.
 
-Format the response using simple Markdown. Use a main heading for the concept, followed by bullet points or short paragraphs for the key points.
+Structure the response using the following sections in Markdown format:
+
+# {concept}
+
+## 1. Definition
+(Provide a clear and concise definition of the concept.)
+
+## 2. Core Concepts
+(Explain the fundamental principles and main ideas behind the concept. Use bullet points for clarity.)
+
+## 3. Advantages
+(List the key advantages or benefits of the concept. Use a numbered or bulleted list.)
+
+## 4. Disadvantages
+(List the key disadvantages or drawbacks of the concept. Use a numbered or bulleted list.)
+
+## 5. Examples
+(Provide at least two clear and distinct examples to illustrate the concept in practice. One technical/academic and one real-world analogy if possible.)
+
+## 6. Limitations
+(Discuss the limitations or boundaries where the concept may not apply or is less effective.)
+
+## 7. Conclusion
+(Summarize the most important takeaways about the concept.)
 `,
   presentation: `
 Generate a professional presentation script for the concept '{concept}'.
@@ -625,6 +646,27 @@ export const generateRecommendations = async (currentBook: Book, allBooks: Book[
     }
 };
 
+export const fetchRelatedResources = async (concept: string): Promise<RelatedResourcesResult> => {
+  const prompt = `Find helpful online resources to learn more about "${concept}".
+  Structure your response in Markdown format with three sections: 'Web Articles', 'News Articles', and 'YouTube Videos'.
+  Under each section, list up to 3 relevant resources. For each resource, provide its title and a one-sentence description of what it covers.`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+    config: {
+      tools: [{googleSearch: {}}],
+    },
+  });
+  
+  const chunks: GroundingChunk[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+
+  return {
+    markdownContent: response.text,
+    sources: chunks,
+  };
+};
+
 // FIX: Implement missing functions generateDebateArguments, generateLearningPath, and analyzeCode.
 export const generateDebateArguments = async (topic: string): Promise<DebateArguments> => {
     const prompt = `Generate 3 distinct and well-reasoned arguments for (pro) and 3 against (con) the following debate topic: "${topic}".
@@ -704,7 +746,14 @@ export const startChat = () => {
   chat = ai.chats.create({
     model: 'gemini-2.5-flash',
     config: {
-      systemInstruction: 'You are a friendly and knowledgeable AI Tutor. Your goal is to help users understand complex topics by providing clear, concise explanations and asking thought-provoking questions. Adapt your teaching style to the user\'s level of understanding.',
+      systemInstruction: `You are a friendly and knowledgeable AI Tutor. Your goal is to help users understand complex topics. When a user asks a question, structure your response to maximize learning and engagement. Follow this format:
+
+1.  **Direct Answer:** Provide a clear and concise answer to the user's question.
+2.  **Elaboration & Example:** Break down the concept further. Use a simple real-world analogy or a practical example to make it easier to understand. Use Markdown formatting (like bullet points, bold text, and code blocks where appropriate) for clarity.
+3.  **Check for Understanding:** Ask a simple, thought-provoking question to see if the user has grasped the concept.
+4.  **Next Steps:** Suggest a related topic or ask if they want to dive deeper into any specific part of the explanation.
+
+Always adapt your teaching style to the user's perceived level of understanding. Keep your tone encouraging and helpful.`,
     },
   });
 };
